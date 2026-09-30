@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#667eea">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Госзакупки: Симулятор ULTIMATE v1.5.1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f5f5f5;color:#333;line-height:1.6}
+.screen{display:none;min-height:100vh}
+.screen.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.main-menu{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.game-title{font-size:3em;color:#fff;text-align:center;margin-bottom:10px;text-shadow:3px 3px 6px rgba(0,0,0,.4);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.subtitle{color:rgba(255,255,255,.95);font-size:1.3em;margin-bottom:30px;text-align:center}
+.platforms-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;max-width:900px;width:100%;margin-bottom:20px}
+.platform-card{background:#fff;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .3s;box-shadow:0 6px 12px rgba(0,0,0,.2);border:3px solid transparent}
+.platform-card:hover{transform:translateY(-5px)}
+.platform-card.selected{border-color:#4CAF50}
+.platform-icon{font-size:2.5em;margin-bottom:10px}
+.platform-name{font-size:1.15em;font-weight:bold;color:#2c3e50}
+.platform-desc{color:#666;font-size:.9em}
+.btn{background:#4CAF50;color:#fff;border:none;padding:12px 25px;font-size:1em;border-radius:8px;cursor:pointer;transition:all .3s;margin:5px;font-weight:600}
+.btn:hover{transform:scale(1.05)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{background:#2196F3}.btn-warning{background:#ff9800}.btn-danger{background:#f44336}
+.btn-small{padding:8px 15px;font-size:.9em}
+.game-header{background:linear-gradient(135deg,#2c3e50,#34495e);color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.header-left h2{font-size:1.3em}.header-left small{opacity:.9;font-size:.85em}
+.resources{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.resource{background:rgba(255,255,255,.15);padding:6px 12px;border-radius:8px;display:flex;align-items:center;gap:6px;font-size:.9em}
+.resource-icon{font-size:1.3em}.resource-value{font-weight:bold}
+.resource.warning{background:rgba(255,152,0,.4)}
+.resource.danger{background:rgba(244,67,54,.5);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+.game-container{max-width:1400px;margin:0 auto;padding:20px}
+.tabs-container{background:#fff;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.1);overflow:hidden}
+.tabs{display:flex;overflow-x:auto;border-bottom:3px solid #3498db}
+.tab{padding:12px 20px;cursor:pointer;background:#f8f9fa;white-space:nowrap;font-size:.9em;font-weight:600}
+.tab:hover{background:#e9ecef}.tab.active{background:#3498db;color:#fff}
+.tab-content{display:none;padding:25px}.tab-content.active{display:block;animation:fadeIn .3s}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.card-title{font-size:1.3em;margin-bottom:15px;color:#2c3e50;border-bottom:3px solid #3498db;padding-bottom:10px}
+.accounts-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
+.account-card{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:18px;border-radius:10px}
+.account-card.bank{background:linear-gradient(135deg,#f093fb,#f5576c)}
+.account-card.special{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.account-card.tax{background:linear-gradient(135deg,#fa709a,#fee140)}
+.account-title{font-size:.9em;opacity:.9;margin-bottom:8px}
+.account-amount{font-size:1.6em;font-weight:bold}
+.account-label{font-size:.85em;opacity:.8}
+.search-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.form-group{display:flex;flex-direction:column}
+.form-group label{margin-bottom:5px;font-weight:600;color:#555;font-size:.9em}
+.form-group input,.form-group select{padding:10px;border:2px solid #ddd;border-radius:8px;font-size:.95em}
+.tenders-table{width:100%;background:#fff;border-radius:10px;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+.tenders-table table{width:100%;border-collapse:collapse;min-width:900px}
+.tenders-table th{background:#34495e;color:#fff;padding:12px;text-align:left;font-size:.9em}
+.tenders-table td{padding:12px;border-bottom:1px solid #ecf0f1;font-size:.9em}
+.tenders-table tr:hover{background:#f8f9fa}
+.tender-status{padding:4px 10px;border-radius:20px;font-size:.8em;font-weight:600;display:inline-block}
+.status-active{background:#d4edda;color:#155724}
+.status-locked{background:#e2e3e5;color:#41464b}
+.status-personal{background:#e2d5f1;color:#5a3d7a}
+.action-btn{padding:7px 12px;border:none;border-radius:5px;cursor:pointer;font-size:.85em;margin:2px}
+.action-btn-primary{background:#3498db;color:#fff}
+.action-btn-info{background:#17a2b8;color:#fff}
+.action-btn:disabled{opacity:.5;cursor:not-allowed}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal.active{display:flex;animation:fadeIn .3s}
+.modal-content{background:#fff;border-radius:15px;max-width:850px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:18px;border-radius:15px 15px 0 0;display:flex;justify-content:space-between;align-items:center}
+.modal-body{padding:25px}
+.close-modal{background:none;border:none;color:#fff;font-size:1.8em;cursor:pointer}
+.notification{position:fixed;top:20px;right:20px;background:#fff;padding:15px 25px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:3000;max-width:350px;animation:slideInRight .3s}
+@keyframes slideInRight{from{transform:translateX(400px)}to{transform:translateX(0)}}
+.notification.success{border-left:5px solid #4CAF50}
+.notification.error{border-left:5px solid #f44336}
+.notification.warning{border-left:5px solid #ff9800}
+.notification.info{border-left:5px solid #17a2b8}
+.notification-title{font-weight:bold;margin-bottom:4px}
+.auction-container{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:25px;border-radius:15px;text-align:center}
+.auction-price{font-size:2.6em;font-weight:bold;margin:15px 0;animation:pulse 1s infinite}
+.price-reduction{font-size:1.1em;background:rgba(255,255,255,.2);padding:8px 15px;border-radius:10px;display:inline-block;margin:10px 0}
+.auction-timer{font-size:1.8em;font-weight:bold;background:rgba(255,255,255,.2);padding:8px 18px;border-radius:10px;display:inline-block;margin:10px 0}
+.auction-timer.urgent{background:rgba(244,67,54,.7);animation:blink .5s infinite}
+.bid-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px}
+.bid-btn{padding:14px 22px;font-size:1.05em;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#fff}
+.bid-btn:hover{transform:scale(1.1)}
+.price-chart-container{background:rgba(255,255,255,.12);border-radius:10px;padding:10px;margin:12px 0;height:140px}
+#priceChart{width:100%;height:100%}
+.competitors-list{background:rgba(255,255,255,.12);padding:15px;border-radius:10px;margin-top:15px;text-align:left}
+.competitor-item{display:flex;justify-content:space-between;padding:8px;margin:4px 0;background:rgba(255,255,255,.12);border-radius:6px}
+.competitor-item.leader{background:rgba(76,175,80,.4);font-weight:bold}
+.highlight-problem{background:#fff3cd;padding:2px 5px;cursor:pointer;border-radius:3px}
+.highlight-problem:hover{background:#ffc107}
+.highlight-found{background:#28a745;color:#fff;cursor:default}
+.zat-sent{padding:7px 10px;margin:6px 0;border-radius:7px;cursor:pointer;line-height:1.7;border:1px solid transparent;background:#fff}
+.zat-sent:hover{border-color:#3498db;background:#eef6ff}
+.zat-found{background:#28a745!important;color:#fff;border-color:#28a745}
+.zat-wrong{background:#f8d7da!important;text-decoration:line-through;opacity:.75;border-color:#f44336}
+.doc-item{padding:10px;margin:6px 0;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.doc-item:hover{border-color:#3498db}
+.doc-item.selected{border-color:#4CAF50;background:#e8f5e9}
+.price-row{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee;align-items:center;gap:10px}
+.price-row input{width:140px;padding:8px;border:1px solid #ddd;border-radius:5px}
+.price-row input::placeholder{color:#b8d4b8;font-weight:600}
+.progress-bar{width:100%;height:24px;background:#e0e0e0;border-radius:12px;overflow:hidden;margin:12px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4CAF50,#8BC34A);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:.85em}
+.rnp-warning{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#DC143C,#8B0000);color:#fff;padding:12px;text-align:center;font-weight:bold;z-index:2000;display:none;animation:blink 1s infinite}
+.rnp-warning.active{display:block}
+.confetti{position:fixed;width:10px;height:10px;z-index:5000;animation:confettiFall 3s linear forwards}
+@keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.employee-card{background:#f8f9fa;padding:12px;border-radius:8px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat-item{background:#f8f9fa;padding:15px;border-radius:10px;border-left:5px solid #3498db}
+.stat-label{font-size:.85em;color:#666}.stat-value{font-size:1.4em;font-weight:bold;color:#2c3e50}
+.stat-bar{width:100%;height:7px;background:#e0e0e0;border-radius:4px;margin-top:6px;overflow:hidden}
+.stat-bar-fill{height:100%;background:linear-gradient(90deg,#4CAF50,#8BC34A)}
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.achievement-card{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;padding:15px;border-radius:12px;display:flex;gap:12px;align-items:center;opacity:.4}
+.achievement-card.unlocked{opacity:1}
+.achievement-icon{font-size:2em}
+.news-item{padding:10px;border-left:4px solid #3498db;margin:8px 0;background:#f8f9fa;border-radius:5px}
+.news-item.urgent{border-left-color:#f44336;background:#ffebee}
+.news-item.good{border-left-color:#4CAF50;background:#e8f5e9}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.calendar-day{padding:8px;text-align:center;border-radius:5px;background:#f0f0f0;font-size:.85em;min-height:45px}
+.calendar-day.today{background:#3498db;color:#fff;font-weight:bold}
+.calendar-day.deadline{background:#f44336;color:#fff}
+.calendar-day.contract{background:#9c27b0;color:#fff}
+.progression-badge{display:inline-block;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;padding:6px 14px;border-radius:20px;font-weight:bold}
+.hint-box{background:#e8f5e9;padding:10px 12px;border-radius:8px;font-size:.9em;margin:10px 0;border-left:4px solid #4CAF50}
+.debt-box{background:#ffebee;border:2px solid #f44336;border-radius:8px;padding:12px;margin-top:10px}
+.challenge-card{background:#f8f9fa;border-left:5px solid #ff9800;border-radius:8px;padding:12px;margin:8px 0}
+.challenge-card.done{border-left-color:#4CAF50;background:#e8f5e9}
+.tech-card{background:#f8f9fa;border-left:5px solid #9c27b0;border-radius:8px;padding:12px;margin:8px 0}
+.tech-card.owned{border-left-color:#4CAF50;background:#e8f5e9}
+.event-card{background:linear-gradient(135deg,#ffecd2,#fcb69f);padding:20px;border-radius:12px;margin:10px 0}
+.event-title{font-size:1.2em;font-weight:bold;margin-bottom:12px;color:#2c3e50}
+@media(max-width:768px){
+  .game-title{font-size:1.6em;animation:none}
+  .subtitle{font-size:1em;margin-bottom:16px}
+  .main-menu{padding:14px}
+  .game-header{padding:8px 10px;gap:6px}
+  .header-left h2{font-size:1em}
+  .header-left small{font-size:.74em}
+  .resources{gap:6px}
+  .resource{padding:4px 8px;font-size:.78em;border-radius:6px}
+  .resource-icon{font-size:1em}
+  .game-container{padding:10px}
+  .tabs .tab{padding:9px 11px;font-size:.78em}
+  .tab-content{padding:12px}
+  .card{padding:14px;border-radius:10px}
+  .card-title{font-size:1.05em}
+  .account-card{padding:13px}
+  .account-amount{font-size:1.25em}
+  .btn{padding:9px 14px;font-size:.88em;margin:4px}
+  .btn-small{padding:7px 10px;font-size:.8em}
+  .modal-body{padding:14px}
+  .modal-content{max-height:94vh}
+  .notification{top:8px;right:8px;left:8px;max-width:none;padding:10px 14px}
+  .auction-container{padding:14px}
+  .auction-price{font-size:1.7em;margin:10px 0}
+  .auction-timer{font-size:1.3em}
+  .bid-btn{padding:11px 12px;font-size:.92em}
+  .search-form{grid-template-columns:1fr}
+  .price-row{flex-direction:column;align-items:stretch}
+  .price-row input{width:100%}
+  .stat-item{padding:11px}
+  .stats-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .platform-card{padding:14px}
+}
+@media(max-width:380px){
+  .resource{font-size:.72em;padding:3px 7px}
+  .tab{padding:8px 9px}
+}
+</style>
+</head>
+<body>
+
+<div id="rnpWarning" class="rnp-warning">🚫 ВЫ В РНП! Нельзя участвовать в закупках. Осталось дней: <span id="rnpDaysCount">0</span></div>
+
+<div id="mainMenu" class="screen active">
+  <div class="main-menu">
+    <h1 class="game-title">🏛️ Госзакупки: Симулятор ULTIMATE</h1>
+    <p class="subtitle">v1.5.1: адаптация под экран смартфона + все фиксы v1.5</p>
+    <div class="platforms-grid">
+      <div class="platform-card" onclick="selectPlatform('rts',this)"><div class="platform-icon">🔴</div><div class="platform-name">РТС-тендер</div><div class="platform-desc">Классика жанра</div></div>
+      <div class="platform-card" onclick="selectPlatform('sber',this)"><div class="platform-icon">🟢</div><div class="platform-name">Сбербанк-АСТ</div><div class="platform-desc">Быстрая, но дорогая</div></div>
+      <div class="platform-card" onclick="selectPlatform('etp',this)"><div class="platform-icon">🔵</div><div class="platform-name">ЕЭТП</div><div class="platform-desc">Госзаказ, бюрократия</div></div>
+      <div class="platform-card" onclick="selectPlatform('mir',this)"><div class="platform-icon">🟡</div><div class="platform-name">МИР</div><div class="platform-desc">Молодая площадка</div></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:15px">
+      <button class="btn" onclick="startGame('campaign')">🎯 Кампания (старт 50 тыс.)</button>
+      <button class="btn btn-secondary" onclick="startGame('sandbox')">🏖️ Песочница</button>
+      <button class="btn btn-warning" onclick="startGame('speedrun')">⚡ Спидран</button>
+      <button class="btn btn-danger" onclick="startGame('hardcore')">💀 Хардкор</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:15px">
+      <button class="btn btn-secondary" id="continueBtn" style="display:none" onclick="continueGame()">▶ Продолжить сохранение</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-secondary" onclick="showProfileModal()">👤 Личный кабинет</button>
+      <button class="btn btn-warning" onclick="showAchievementsModal()">🏆 Достижения</button>
+      <button class="btn btn-secondary" onclick="exportSave()">💾 Экспорт сейва</button>
+      <label class="btn btn-secondary" style="cursor:pointer">📂 Импорт сейва<input type="file" accept=".json,application/json" style="display:none" onchange="if(this.files&&this.files[0]) importSave(this.files[0])"></label>
+      <button class="btn btn-secondary" id="soundBtnMenu" onclick="toggleSound()">🔊 Звук: вкл</button>
+      <button class="btn btn-danger" onclick="wipeSave()">🗑 Сбросить сохранение</button>
+    </div>
+    <div style="margin-top:15px"><span class="progression-badge" id="menuStage">ИП-новичок</span></div>
+  </div>
+</div>
+
+<div id="gameScreen" class="screen">
+  <div class="game-header">
+    <div class="header-left">
+      <h2>🏛️ Госзакупки: ULTIMATE v1.5.1</h2>
+      <small id="currentPlatform">Площадка: РТС-тендер</small> |
+      <small id="companyDisplay">Компания: не указана</small> |
+      <small id="modeDisplay">Режим: Кампания</small> |
+      <small>Стадия: <span id="stageDisplay">ИП-новичок</span></small> |
+      <small>Титул: <span id="titleDisplay">Новичок госзаказа</span></small> |
+      <small>Стратегия: <span id="strategyDisplay">—</span></small>
+    </div>
+    <div class="resources">
+      <div class="resource"><span class="resource-icon">📅</span>День: <span class="resource-value" id="day">1</span></div>
+      <div class="resource"><span class="resource-icon">🌤️</span><span class="resource-value" id="seasonText">Лето</span></div>
+      <div class="resource" id="ecpRes"><span class="resource-icon">🔐</span>ЭЦП: <span class="resource-value" id="ecp">90</span>д</div>
+      <div class="resource"><span class="resource-icon">⭐</span>Рейтинг: <span class="resource-value" id="rating">0</span></div>
+      <div class="resource"><span class="resource-icon">👥</span>Сотр: <span class="resource-value" id="employeesCount">0</span></div>
+      <div class="resource" id="nervesRes"><span class="resource-icon">🧘</span>Нервы: <span class="resource-value" id="nerves">100</span>%</div>
+      <div class="resource" id="rnpResource" style="display:none"><span class="resource-icon">🚫</span>РНП: <span class="resource-value" id="rnpDays">0</span>д</div>
+      <button class="btn btn-small" id="soundBtn" onclick="toggleSound()" style="margin:0">🔊</button>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <div class="tabs-container">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('tenders',this)">🔍 Тендеры</div>
+        <div class="tab" onclick="switchTab('bank',this)">🏦 Банк</div>
+        <div class="tab" onclick="switchTab('market',this)">📈 Рынок</div>
+        <div class="tab" onclick="switchTab('company',this)">🏢 Компания</div>
+        <div class="tab" onclick="switchTab('accounting',this)">💰 Бухгалтерия</div>
+        <div class="tab" onclick="switchTab('fas',this)">⚖️ ФАС</div>
+        <div class="tab" onclick="switchTab('contracts',this)">📄 Контракты</div>
+        <div class="tab" onclick="switchTab('life',this)">🧘 Жизнь</div>
+        <div class="tab" onclick="switchTab('news',this)">📰 Новости</div>
+        <div class="tab" onclick="switchTab('calendar',this)">📅 Календарь</div>
+        <div class="tab" onclick="switchTab('stats',this)">📈 Статистика</div>
+        <div class="tab" onclick="switchTab('achievements',this)">🏆 Достижения</div>
+      </div>
+
+      <div class="tab-content active" id="tab-tenders">
+        <div class="accounts-panel">
+          <div class="account-card"><div class="account-title">💳 Расчётный счёт</div><div class="account-amount" id="mainAccount">0 ₽</div></div>
+          <div class="account-card special"><div class="account-title">🔒 Спецсчёт</div><div class="account-amount" id="specialAccount">0 ₽</div><div class="account-label">Заблокировано: <span id="blockedAmount">0 ₽</span></div></div>
+          <div class="account-card bank"><div class="account-title">🏦 Кредиты</div><div class="account-amount" id="creditsAmount">0 ₽</div><div class="account-label">Доступно: <span id="creditLimit">0 ₽</span></div></div>
+          <div class="account-card tax"><div class="account-title">📋 Налоги</div><div class="account-amount" id="taxDue">0 ₽</div><div class="account-label">Отчётность: <span id="nextReport">30</span> дн.</div></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🔍 Поиск закупок</h3>
+          <div class="search-form">
+            <div class="form-group"><label>Наименование</label><input type="text" id="searchName" placeholder="Что ищем?"></div>
+            <div class="form-group"><label>НМЦК от</label><input type="number" id="searchPriceFrom" placeholder="0"></div>
+            <div class="form-group"><label>НМЦК до</label><input type="number" id="searchPriceTo" placeholder="10000000"></div>
+            <div class="form-group"><label>Тип</label><select id="searchType"><option value="all">Все</option><option value="44">44-ФЗ</option><option value="223">223-ФЗ</option></select></div>
+            <div class="form-group"><label>Категория</label><select id="searchCategory"><option value="all">Все</option><option value="office">Офис</option><option value="it">IT</option><option value="construction">Стройка</option><option value="medical">Медицина</option><option value="food">Продукты</option><option value="transport">Транспорт</option><option value="service">Услуги</option></select></div>
+          </div>
+          <div style="margin-top:15px">
+            <button class="btn" onclick="searchTenders()">🔍 Найти</button>
+            <button class="btn btn-secondary" onclick="clearSearch()">Очистить</button>
+            <button class="btn btn-warning" onclick="endDay()">🌙 Завершить день (+40 нервов)</button>
+          </div>
+        </div>
+        <div class="tenders-table"><table>
+          <thead><tr><th>Номер</th><th>Наименование</th><th>Заказчик</th><th>НМЦК</th><th>Обеспечение</th><th>Окончание</th><th>Тип</th><th>Риск</th><th>Действия</th></tr></thead>
+          <tbody id="tendersBody"><tr><td colspan="9" style="text-align:center;padding:40px;color:#999">Нажмите "Найти"</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <div class="tab-content" id="tab-bank">
+        <div class="card">
+          <h3 class="card-title">💸 Перевод на спецсчёт</h3>
+          <div class="form-group"><label>Сумма</label><input type="number" id="transferAmount" placeholder="100000"></div>
+          <button class="btn" onclick="transferToSpecial()">🔄 Перевести на спецсчёт</button>
+          <button class="btn btn-secondary" onclick="withdrawFromSpecial()">↩️ Вывести на расчётный</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">💰 Кредит</h3>
+          <div class="form-group"><label>Сумма</label><input type="number" id="creditAmount" placeholder="500000"></div>
+          <div class="form-group"><label>Срок</label><select id="creditTerm"><option value="3">3 мес (15%)</option><option value="6">6 мес (18%)</option><option value="12">12 мес (22%)</option></select></div>
+          <button class="btn btn-warning" onclick="takeCredit()">💵 Взять кредит</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">💰 Вклады</h3>
+          <div class="form-group"><label>Сумма (мин. 10 000 ₽)</label><input type="number" id="depositAmount" placeholder="100000"></div>
+          <div class="form-group"><label>Срок</label><select id="depositTerm"><option value="90">90 дней — 8% годовых</option><option value="180">180 дней — 10% годовых</option><option value="360">360 дней — 12% годовых</option></select></div>
+          <button class="btn" onclick="openDeposit()">💰 Открыть вклад</button>
+          <h4 style="margin-top:15px">Активные вклады:</h4>
+          <div id="depositsList"><p style="color:#666">Нет вкладов</p></div>
+        </div>
+        <div class="card"><h3 class="card-title">📋 Активные обеспечения</h3><div id="activeSecurities"><p style="color:#666">Нет</p></div></div>
+      </div>
+
+      <div class="tab-content" id="tab-market">
+        <div class="card">
+          <h3 class="card-title">📈 Рынок поставщиков (индексы цен)</h3>
+          <p style="color:#666;margin-bottom:10px">Индексы плавают ±15% ежедневно. Лот со склада при исполнении контракта даёт +/− от разницы индексов.</p>
+          <div id="marketList"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📦 Склад (лоты)</h3>
+          <div id="inventoryList"><p style="color:#666">Пусто</p></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-company">
+        <div class="card">
+          <h3 class="card-title">🏢 Офис</h3>
+          <div style="font-size:3em" id="officeIcon">🏠</div>
+          <div style="font-size:1.2em;font-weight:bold" id="officeName">Кухня</div>
+          <p id="officeDesc">Уровень 1</p>
+          <button class="btn" onclick="upgradeOffice()">🏗️ Улучшить (<span id="officeUpgradeCost">300000</span>₽)</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🔬 Исследования (RP: <span id="rpDisplay">0</span>)</h3>
+          <p style="color:#666;margin-bottom:10px">RP: +1 за победу, +2 за контракт, +1 за ФАС/арбитраж/челлендж/инспектора.</p>
+          <div id="researchList"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">✨ Престиж «Новое дело+»</h3>
+          <p style="color:#666;margin-bottom:10px">Текущий престиж: <strong id="prestigeDisplay">0</strong>. Доступно со стадии «Холдинг». Навсегда: +10% маржа, ×2 старт-капитал, +1 RP.</p>
+          <button class="btn btn-danger" onclick="prestige()">✨ Начать «Новое дело+»</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🛒 Покупки (одноразово)</h3>
+          <div id="purchasesList"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">👥 Сотрудники (уровни ⭐1–3, тренинг 30 000 ₽)</h3>
+          <div id="employeesList"><p style="color:#666">Нет сотрудников</p></div>
+          <div class="form-group"><label>Нанять</label><select id="hirePosition">
+            <option value="accountant">Бухгалтер (50000₽/мес)</option>
+            <option value="lawyer">Юрист (70000₽/мес)</option>
+            <option value="tender">Тендерный специалист (60000₽/мес)</option>
+            <option value="manager">Менеджер (80000₽/мес)</option>
+          </select></div>
+          <button class="btn" onclick="hireEmployee()">💼 Нанять</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📜 Сертификаты</h3>
+          <div id="certificationsList"><p style="color:#666">Нет</p></div>
+          <div class="form-group"><label>Получить</label><select id="certType">
+            <option value="sro_construction">СРО Строительство (300000₽)</option>
+            <option value="sro_design">СРО Проектирование (250000₽)</option>
+            <option value="mchs">Лицензия МЧС (200000₽)</option>
+            <option value="pharma">Лицензия Фарм (400000₽)</option>
+            <option value="iso">ISO 9001 (150000₽)</option>
+          </select></div>
+          <button class="btn" onclick="getCertification()">📜 Получить</button>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-accounting">
+        <div class="card">
+          <h3 class="card-title">💰 Налоги</h3>
+          <div class="stats-grid">
+            <div class="stat-item"><div class="stat-label">Система</div><div class="stat-value" id="taxSystem">УСН 6%</div></div>
+            <div class="stat-item"><div class="stat-label">НДС</div><div class="stat-value" id="vatDue">0 ₽</div></div>
+            <div class="stat-item"><div class="stat-label">Прибыль</div><div class="stat-value" id="profitTax">0 ₽</div></div>
+            <div class="stat-item"><div class="stat-label">Взносы</div><div class="stat-value" id="insuranceDue">0 ₽</div></div>
+          </div>
+          <div style="margin-top:15px">
+            <button class="btn btn-warning" onclick="payTaxes()">💸 Уплатить</button>
+            <button class="btn btn-secondary" onclick="changeTaxSystem()">🔄 Сменить систему</button>
+          </div>
+        </div>
+        <div class="card"><h3 class="card-title">📋 Операции</h3><div id="transactionsList" style="max-height:300px;overflow-y:auto"><p style="color:#666">Нет</p></div></div>
+      </div>
+
+      <div class="tab-content" id="tab-fas">
+        <div class="card">
+          <h3 class="card-title">⚖️ Жалобы (5000₽, 10 дней)</h3>
+          <div id="fasCasesList"><p style="color:#666">Нет жалоб</p></div>
+          <div class="form-group"><label>Тендер</label><select id="fasTender"><option value="">Выберите</option></select></div>
+          <div class="form-group"><label>Основание</label><select id="fasReason"><option value="rigged">Заточка ТЗ</option><option value="unfair">Необоснованное отклонение</option><option value="cancel">Незаконная отмена</option><option value="corruption">Коррупция</option></select></div>
+          <button class="btn btn-warning" onclick="fileFasComplaint()">⚖️ Подать жалобу</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🕵️ Смена инспектора (2 в сезон, вход 5 000 ₽)</h3>
+          <p style="color:#666;margin-bottom:10px">Найдите 2 нарушения в чужой заявке. Награда: +15 000 ₽, +10 ФАС, +1 RP. Ошибка: −5 ФАС.</p>
+          <div id="inspectorArea"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-contracts">
+        <div class="card"><h3 class="card-title">📄 Контракты (дедлайны, страхование, субподряд, арбитраж)</h3><div id="contractsList"><p style="color:#666">Нет контрактов</p></div></div>
+      </div>
+
+      <div class="tab-content" id="tab-life">
+        <div class="card">
+          <h3 class="card-title">🎁 Ежедневная награда</h3>
+          <button class="btn btn-warning" id="dailyBtn" onclick="dailyClaim()">🎁 Дейли (стрик 0)</button>
+          <p style="color:#666;margin-top:8px">Стрик сбрасывается, если пропустить день. 7-й день = 50 000 ₽.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎯 Челленджи недели</h3>
+          <div id="challengesList"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🧘 Состояние игрока</h3>
+          <p>Нервы: <strong id="lifeNerves">100</strong>% | Мораль команды: <strong id="moraleDisplay">100</strong>%</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" onclick="restAction()">😌 Отдых (+20, 1 р/день)</button>
+            <button class="btn btn-secondary" onclick="drinkCoffee()">☕ Кофе (+10, <span id="coffeeCost">200</span>₽, 3 р/день)</button>
+            <button class="btn btn-secondary" onclick="massageAction()">💆 Массаж (+25, 2500₽, 1 р/день)</button>
+            <button class="btn btn-warning" onclick="vacationAction()">🏖️ Отпуск (+100, 50000₽, +7 дней)</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">👥 Команда</h3>
+          <p>Мораль: <strong id="moraleDisplay2">100</strong>% — ниже 50% бонусы отключены и сотрудник косячит, ниже 30% могут уволиться.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="teamCoffee()">☕ Кофе команде (+10, 500₽)</button>
+            <button class="btn btn-warning" onclick="corporateDay()">🎉 Корпоратив (+30, 2000₽/сотр.)</button>
+            <button class="btn" onclick="dayOff()">🛌 Выходной (+40 морали)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-news"><div class="card"><h3 class="card-title">📰 Новости</h3><div id="newsFeed"><p style="color:#666">Нет</p></div></div></div>
+      <div class="tab-content" id="tab-calendar"><div class="card"><h3 class="card-title">📅 Дедлайны</h3><div id="calendarView"></div></div></div>
+      <div class="tab-content" id="tab-stats">
+        <div class="card"><h3 class="card-title">📈 Статистика</h3><div class="stats-grid" id="statsGrid"></div></div>
+        <div class="card"><h3 class="card-title">🌍 Доля рынка (⚔️ = ценовая война при >40%)</h3><div class="stats-grid" id="marketShare"></div></div>
+        <div class="card"><h3 class="card-title">📚 Альбом кейсов (последние 15)</h3><div id="casesList"><p style="color:#666">Пусто</p></div></div>
+        <div class="card"><h3 class="card-title">📊 Репутация</h3><div class="stats-grid" id="repBars"></div></div>
+      </div>
+      <div class="tab-content" id="tab-achievements"><div class="card"><h3 class="card-title">🏆 Достижения</h3><div class="achievements-grid" id="achievementsList"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="tzModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>📋 ТЗ</h3><button class="close-modal" onclick="closeModal('tzModal')">&times;</button></div><div class="modal-body" id="tzContent"></div></div></div>
+<div id="analysisModal" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="analysisTitle">Анализ</h3><button class="close-modal" onclick="closeModal('analysisModal')">&times;</button></div><div class="modal-body" id="analysisContent"></div></div></div>
+<div id="auctionModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>🎪 Электронные торги</h3><button class="close-modal" onclick="exitAuction()">&times;</button></div><div class="modal-body">
+  <div class="auction-container">
+    <h3 id="auctionTenderName">—</h3>
+    <div class="price-chart-container"><canvas id="priceChart"></canvas></div>
+    <div class="auction-price" id="auctionPrice">0 ₽</div>
+    <div class="price-reduction" id="priceReduction">Снижение: 0%</div><br>
+    <div class="auction-timer" id="auctionTimer">00:30</div>
+    <p>Ваша ставка: <strong id="myBid">—</strong></p>
+    <div class="bid-buttons">
+      <button class="bid-btn" style="background:#f44336" onclick="makeBid(-5)">-5%</button>
+      <button class="bid-btn" style="background:#f44336" onclick="makeBid(-10)">-10%</button>
+      <button class="bid-btn" style="background:#f44336" onclick="makeBid(-15)">-15%</button>
+      <button class="bid-btn" style="background:#f44336" onclick="makeBid(-25)">-25%</button>
+      <button class="bid-btn" style="background:#2196F3" onclick="makeBid(0)">Держать</button>
+      <button class="bid-btn" style="background:#757575" onclick="exitAuction()">Выйти</button>
+    </div>
+  </div>
+  <div class="competitors-list"><h4>👥 Участники торгов (вы — зелёным):</h4><div id="competitorsList"></div></div>
+</div></div></div>
+<div id="profileModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>👤 Личный кабинет</h3><button class="close-modal" onclick="closeModal('profileModal')">&times;</button></div><div class="modal-body" id="profileContent"></div></div></div>
+<div id="daySummaryModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>🌙 Итоги дня</h3><button class="close-modal" onclick="closeModal('daySummaryModal')">&times;</button></div><div class="modal-body" id="daySummaryContent"></div></div></div>
+<div id="achievementsModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>🏆 Достижения</h3><button class="close-modal" onclick="closeModal('achievementsModal')">&times;</button></div><div class="modal-body"><div class="achievements-grid" id="achievementsModalList"></div></div></div></div>
+<div id="gameoverModal" class="modal"><div class="modal-content" style="max-width:520px"><div class="modal-header"><h3>💔 Игра окончена</h3><button class="close-modal" onclick="closeModal('gameoverModal')">&times;</button></div><div class="modal-body" id="gameoverContent"></div></div></div>
+<div id="boardModal" class="modal"><div class="modal-content" style="max-width:520px"><div class="modal-header"><h3>🏛️ Совет директоров</h3><button class="close-modal" onclick="closeModal('boardModal')">&times;</button></div><div class="modal-body" id="boardContent"></div></div></div>
+<div id="ethicalModal" class="modal"><div class="modal-content" style="max-width:560px"><div class="modal-header"><h3>⚖️ Этическая дилемма</h3><button class="close-modal" onclick="closeModal('ethicalModal')">&times;</button></div><div class="modal-body" id="ethicalContent"></div></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const setT = (id,v) => { const n=$(id); if(n) n.textContent=v; };
+const setH = (id,v) => { const n=$(id); if(n) n.innerHTML=v; };
+const fmt = n => Math.floor(n).toLocaleString('ru-RU');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SAVE_KEY='goszakupki_ultimate_v15';
+
+let AC=null;
+function tone(f,d,type,v){ if(!gameState.soundOn) return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(), g=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; o.connect(g); g.connect(AC.destination); const t=AC.currentTime; g.gain.setValueAtTime(v||0.1,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); o.start(t); o.stop(t+d); }catch(e){} }
+function sfx(k){
+  if(k==='win'){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.15,'triangle',0.12),i*120)); }
+  else if(k==='lose'){ tone(160,0.35,'sawtooth',0.1); }
+  else if(k==='coin'){ tone(1320,0.07,'triangle',0.1); setTimeout(()=>tone(1760,0.09,'triangle',0.1),70); }
+  else if(k==='error'){ tone(220,0.18,'square',0.08); }
+  else if(k==='tick'){ tone(1000,0.04,'sine',0.06); }
+  else { tone(880,0.05,'sine',0.07); }
+}
+function toggleSound(){
+  gameState.soundOn=!gameState.soundOn;
+  const b=$('soundBtn'), bm=$('soundBtnMenu');
+  if(b) b.textContent=gameState.soundOn?'🔊':'🔇';
+  if(bm) bm.textContent=(gameState.soundOn?'🔊 Звук: вкл':'🔇 Звук: выкл');
+  notify('info','Звук', gameState.soundOn?'Включён':'Выключен');
+  saveGame();
+}
+
+function defaultState(){
+  return {
+    mainAccount:50000, specialAccount:0, blockedSecurities:0, credits:0, creditLimit:1000000,
+    nerves:100, morale:100, day:1, rating:0, rnpDays:0, ecpDays:90,
+    officeLevel:0, employees:[], certifications:[], contracts:[], activeSecurities:[],
+    transactions:[], news:[], fasCases:[], deposits:[], owned:[],
+    daily:{rest:0,coffee:0,massage:0,corp:0,teamCoffee:0},
+    stats:{tendersWon:0,tendersLost:0,problemsFound:0,complaintsWon:0,contractsCompleted:0,totalRevenue:0,taxesPaid:0,depositsOpened:0,traderPnl:0},
+    skills:{law:1,computer:1,stress:1,speech:1},
+    reputation:{customers:50,fas:50,banks:50},
+    dayTenders:[], currentTender:null, competitors:[], myBestBid:null, nmck:0,
+    auctionTimer:null, stableTicks:0, season:'Лето', vatDue:0, profitTax:0, insuranceDue:0, nextReportDay:30,
+    gameOver:false, soundOn:true, consortiumMode:false,
+    marketWins:{}, marketLosses:{},
+    priceIndex:{office:1,it:1,construction:1,medical:1,food:1,transport:1,service:1},
+    pricePrev:{office:1,it:1,construction:1,medical:1,food:1,transport:1,service:1},
+    inventory:{},
+    weekStats:{wins:0,fas:0,contracts:0,finds:0,lots:0}, challenges:[], week:0,
+    rp:0, techs:{}, prestigeCount:0, streak:0, lastLogin:'', dailyClaim:'', cases:[],
+    strategy:null, strategyUntil:0, lastBoardDay:0, seasonMod:'none',
+    inspectorSeason:-1, inspectorUses:0, inspectorPhase:'idle', inspectorLastResult:'', honestCount:0,
+    lastSalaryDay:0, taxedRevenue:0, achProgress:{}
+  };
+}
+const gameState = Object.assign(defaultState(), {
+  platform:'rts', mode:'campaign', taxSystem:'usn6',
+  profile:{name:'',type:'ИП',inn:'',tax:'usn6',exp:0},
+  achievements:{}
+});
+
+const STAGES = [
+  {name:'ИП-новичок', maxTender:100000},
+  {name:'ИП-опытный', maxTender:500000},
+  {name:'ООО малый', maxTender:2000000},
+  {name:'ООО средний', maxTender:10000000},
+  {name:'Холдинг', maxTender:Infinity}
+];
+const OFFICES = [
+  {name:'Кухня',icon:'🏠',cost:0},{name:'Коворкинг',icon:'💻',cost:300000},
+  {name:'Офис 20м²',icon:'🏢',cost:1500000},{name:'Офис 100м²',icon:'🏬',cost:8000000},
+  {name:'БЦ класса A',icon:'🏛️',cost:50000000}
+];
+const EMPLOYEES = {
+  accountant:{name:'Бухгалтер',salary:50000,bonus:'-20% к налогам'},
+  lawyer:{name:'Юрист',salary:70000,bonus:'+20% шанс жалобы и арбитража'},
+  tender:{name:'Тендерный специалист',salary:60000,bonus:'+10 сек к анализу'},
+  manager:{name:'Менеджер',salary:80000,bonus:'лучше условия торгов'}
+};
+const CERTS = {sro_construction:'СРО Строительство',sro_design:'СРО Проектирование',mchs:'Лицензия МЧС',pharma:'Лицензия Фарм',iso:'ISO 9001'};
+const CERT_COSTS = {sro_construction:300000,sro_design:250000,mchs:200000,pharma:400000,iso:150000};
+const PURCHASES = {
+  furniture:{name:'Офисная мебель',icon:'🛋️',cost:50000,effect:'+5 нервов/день'},
+  coffee_machine:{name:'Кофемашина',icon:'☕',cost:30000,effect:'Кофе бесплатно'},
+  pc:{name:'Мощный компьютер',icon:'🖥️',cost:80000,effect:'+10 сек к анализу'},
+  printer:{name:'Принтер',icon:'🖨️',cost:25000,effect:'В «документах» допустима 1 ошибка'},
+  plant:{name:'Растение',icon:'🪴',cost:5000,effect:'+2 нерва/день'},
+  car:{name:'Машина компании',icon:'🚗',cost:1500000,effect:'Работа по контракту +35%'}
+};
+const CAT_NAMES = {office:'Офис',it:'IT',construction:'Стройка',medical:'Медицина',food:'Продукты',transport:'Транспорт',service:'Услуги'};
+const CAT_BASE = {office:50000,it:150000,construction:200000,medical:180000,food:60000,transport:120000,service:40000};
+const TECHS = {
+  edo:{name:'ЭДО', cost:2, desc:'+1 день к срокам всех тендеров'},
+  autoanal:{name:'Автоанализ', cost:3, desc:'+10 сек к мини-играм'},
+  analytics:{name:'Аналитика рынка', cost:4, desc:'Видеть ставки конкурентов до своей ставки'},
+  legal:{name:'Юротдел', cost:3, desc:'+15% к шансам ФАС и арбитража'},
+  bot:{name:'Тендер-бот', cost:5, desc:'+10 000 ₽ пассивно каждый день'}
+};
+const CH_POOL = {
+  w_win:{text:'Выиграть 2 тендера', target:2},
+  w_fas:{text:'Подать 1 жалобу в ФАС', target:1},
+  w_contract:{text:'Исполнить 1 контракт', target:1},
+  w_find:{text:'Найти 5 заточек', target:5},
+  w_lot:{text:'Купить 1 лот на складе', target:1}
+};
+const CH_GET = {
+  w_win:()=>gameState.weekStats.wins,
+  w_fas:()=>gameState.weekStats.fas,
+  w_contract:()=>gameState.weekStats.contracts,
+  w_find:()=>gameState.weekStats.finds,
+  w_lot:()=>gameState.weekStats.lots
+};
+const SEASON_MODS = {elections:'🗳️ Год выборов: +тендеры стройки', digital:'💻 Цифровизация: +тендеры IT', austerity:'✂️ Секвестр: НМЦК −20%', none:'—'};
+const DILEMMAS = [
+  {id:'bribe', q:'🤑 Заказчик намекает на откат 10% от контракта', opts:[['💰 Взять откат','bribe_take'],['❌ Отказать','bribe_refuse'],['📢 Сообщить в ФАС','bribe_report']]},
+  {id:'cartel', q:'🤝 Конкурент предлагает картель: делим тендеры, не демпингуем', opts:[['🤝 Согласиться','cartel_take'],['❌ Отказать','cartel_refuse']]},
+  {id:'press', q:'📰 Журналист просит комментарий о нарушении конкурента', opts:[['🎤 Сказать правду','press_truth'],['🤐 Промолчать','press_silent'],['🔪 Очернить конкурента','press_lie']]}
+];
+
+const tendersDB = [
+  {number:'0373000000126000101',name:'Канцтовары для школы',customer:'МБОУ "СОШ №3"',price:60000,security:3000,deadline:10,type:'44',category:'office',risk:'low',analysisType:'price',tz:{item:'Ручки, бумага, папки',qty:'200 наборов',delivery:'10 дней',payment:'100% после поставки',warranty:'Не требуется',requirements:['Опыт от 6 месяцев']}},
+  {number:'0373000000126000102',name:'Уборка офиса',customer:'ГБУ "Центр услуг"',price:80000,security:4000,deadline:8,type:'44',category:'service',risk:'low',analysisType:'docs',tz:{item:'Уборка помещений 200 м²',qty:'3 месяца',delivery:'Ежедневно',payment:'Ежемесячно',warranty:'Не требуется',requirements:['Инвентарь','Штат 2 человека']}},
+  {number:'0373000000126000103',name:'Питьевая вода',customer:'Администрация района',price:95000,security:4750,deadline:12,type:'44',category:'food',risk:'low',analysisType:'price',tz:{item:'Вода бутилированная 19 л',qty:'300 бутылей',delivery:'Еженедельно',payment:'30 дней',warranty:'Срок годности',requirements:['Декларации соответствия']}},
+  {number:'0373000000126000104',name:'Ремонт офисной мебели',customer:'МБУ "Хозяйство"',price:100000,security:5000,deadline:14,type:'44',category:'office',risk:'low',analysisType:'find',tz:{item:'Ремонт 20 столов, 40 кресел',qty:'1 партия',delivery:'20 дней',payment:'100% после',warranty:'1 год',requirements:['Опыт от 1 года']}},
+  {number:'0373100000123000001',name:'Поставка офисной бумаги',customer:'ГБУ "Городской центр"',price:500000,security:25000,deadline:15,type:'44',category:'office',risk:'low',analysisType:'find',tz:{item:'Бумага А4 80 г/м²',qty:'1000 пачек',delivery:'3 рабочих дня',payment:'30 дней',warranty:'Не требуется',requirements:['Опыт от 3 лет','Отсутствие задолженности']}},
+  {number:'0373200000123000002',name:'Уборка территории',customer:'МУП "Жилищник"',price:1200000,security:60000,deadline:20,type:'44',category:'service',risk:'medium',analysisType:'docs',tz:{item:'Уборка придомовой территории',qty:'12 месяцев',delivery:'Ежедневно',payment:'Ежемесячно',warranty:'Не требуется',requirements:['Спецтехника','Штат 5 человек']}},
+  {number:'0373300000123000003',name:'Компьютерное оборудование',customer:'МБОУ "СОШ №15"',price:2500000,security:125000,deadline:25,type:'44',category:'it',risk:'low',analysisType:'price',tz:{item:'Ноутбуки, мониторы',qty:'50 комплектов',delivery:'30 дней',payment:'50/50',warranty:'3 года',requirements:['Сертификаты','Гарантийное обслуживание']}},
+  {number:'0373400000123000004',name:'Ремонт дороги',customer:'Администрация города',price:5000000,security:250000,deadline:30,type:'44',category:'construction',risk:'high',analysisType:'find',tz:{item:'Асфальтирование',qty:'2000 м²',delivery:'45 дней',payment:'По этапам',warranty:'5 лет',requirements:['СРО','Опыт от 3 лет','Спецтехника']}},
+  {number:'0373500000123000005',name:'Медицинские изделия',customer:'ГБУЗ "Больница №3"',price:3500000,security:175000,deadline:20,type:'44',category:'medical',risk:'medium',analysisType:'docs',tz:{item:'Тонометры, глюкометры',qty:'100 единиц',delivery:'20 дней',payment:'30 дней',warranty:'2 года',requirements:['Лицензия на медтехнику','РУ']}},
+  {number:'0373600000123000006',name:'Продукты для садика',customer:'МБДОУ "Сад №7"',price:800000,security:40000,deadline:10,type:'44',category:'food',risk:'low',analysisType:'price',tz:{item:'Мясо, молоко, овощи',qty:'3 месяца',delivery:'2 раза в неделю',payment:'Еженедельно',warranty:'Срок годности',requirements:['Ветеринарные справки','Декларации ТР ТС']}},
+  {number:'0373700000123000007',name:'Перевозка сотрудников',customer:'Управление образования',price:1500000,security:75000,deadline:15,type:'44',category:'transport',risk:'medium',analysisType:'find',tz:{item:'Перевозка 50 человек',qty:'1 год',delivery:'Ежедневно',payment:'Ежемесячно',warranty:'Не требуется',requirements:['Лицензия на перевозки','Автопарк 10 машин']}},
+  {number:'0373800000123000008',name:'Разработка ИС',customer:'Министерство',price:4000000,security:200000,deadline:45,type:'223',category:'it',risk:'high',analysisType:'docs',tz:{item:'Информационная система',qty:'1 система',delivery:'180 дней',payment:'30/70',warranty:'1 год',requirements:['Реестр ПО','ФЗ-152','Опыт в госсекторе']}},
+  {number:'0373900000123000009',name:'Лекарства',customer:'Поликлиника №7',price:2500000,security:125000,deadline:18,type:'44',category:'medical',risk:'medium',analysisType:'price',tz:{item:'Препараты ЖНВЛП',qty:'По заявкам',delivery:'10 дней',payment:'60 дней',warranty:'Срок годности',requirements:['Лицензия фарм','Склад класса А']}},
+  {number:'0373100000123000010',name:'Охрана зданий',customer:'Университет',price:2000000,security:100000,deadline:20,type:'44',category:'service',risk:'medium',analysisType:'find',tz:{item:'Охрана 5 корпусов',qty:'12 месяцев',delivery:'24/7',payment:'Ежемесячно',warranty:'Не требуется',requirements:['Лицензия ЧОП','Опыт 3 года']}},
+  {number:'0373100000123000011',name:'Топливо',customer:'Автопарк',price:4500000,security:225000,deadline:25,type:'223',category:'transport',risk:'high',analysisType:'docs',tz:{item:'Дизель',qty:'100 тонн',delivery:'Еженедельно',payment:'Еженедельно',warranty:'Паспорт качества',requirements:['Собственный автопарк','Сертификаты']}},
+  {number:'0373200000123000012',name:'Благоустройство парка',customer:'Департамент ЖКХ',price:12000000,security:600000,deadline:30,type:'44',category:'construction',risk:'high',analysisType:'find',tz:{item:'Благоустройство 5 га',qty:'120 дней',delivery:'По этапам',payment:'По этапам',warranty:'3 года',requirements:['СРО строительство','СРО проектирование','Опыт 5 лет']}}
+];
+
+const ACHIEVEMENTS = [
+  {id:'first_tender',name:'Первая кровь',desc:'Выиграть первый тендер',icon:'🩸',target:1},
+  {id:'tender_5',name:'Опытный игрок',desc:'5 побед',icon:'🎯',target:5},
+  {id:'tender_10',name:'Ветеран',desc:'10 побед',icon:'🏆',target:10},
+  {id:'demper',name:'Демпингист',desc:'Снижение 50%+',icon:'📉',target:1},
+  {id:'detector',name:'Детектор заточек',desc:'Найти 20 проблем',icon:'🔍',target:20},
+  {id:'fas_fighter',name:'ФАС-боец',desc:'3 выигранные жалобы',icon:'⚖️',target:3},
+  {id:'steel_nerves',name:'Стальные нервы',desc:'Прожить 10 дней',icon:'🧘',target:10},
+  {id:'millionaire',name:'Миллионер',desc:'5 млн на счету',icon:'💰',target:5000000},
+  {id:'contractor',name:'Подрядчик',desc:'5 контрактов',icon:'📦',target:5},
+  {id:'employer',name:'Работодатель',desc:'3 сотрудника',icon:'👥',target:3},
+  {id:'certified',name:'Сертифицирован',desc:'3 сертификата',icon:'📜',target:3},
+  {id:'stage_up',name:'Рост',desc:'Достичь стадии ООО малый',icon:'📈',target:2},
+  {id:'depositor',name:'Инвестор',desc:'Открыть 3 вклада',icon:'🏦',target:3},
+  {id:'comfort',name:'Комфорт',desc:'Купить 3 покупки',icon:'🛋️',target:3},
+  {id:'trader',name:'Трейдер', desc:'Заработать 100 000 ₽ на складе', icon:'📈', target:100000},
+  {id:'arbiter',name:'Арбитр', desc:'Выиграть арбитраж у банкрота', icon:'⚖️', target:1},
+  {id:'streak7',name:'Неделя без пропуска', desc:'Стрик 7 дней', icon:'🎁', target:7},
+  {id:'prestige1',name:'Новое дело+', desc:'Первый престиж', icon:'✨', target:1},
+  {id:'inspector',name:'Инспектор', desc: 'Пройти смену инспектора без ошибок', icon:'🕵️', target:1},
+  {id:'honest3',name:'Чистые руки', desc:'3 раза отказаться от взятки/картеля', icon:'😇', target:3},
+  {id:'rnp_survivor',name:'Реестр позади', desc:'Выйти из РНП', icon:'🕊️', target:1}
+];
+
+let priceHistory = [], chartCtx = null;
+
+function hasEmp(pos){ return gameState.employees.some(e=>e.pos===pos); }
+function empMult(pos){ const e=gameState.employees.find(x=>x.pos===pos); return e? 1+0.25*(e.level-1) : 1; }
+function salarySum(){ const k= gameState.strategy==='economy'?0.8:1; return gameState.employees.reduce((s,e)=> s+Math.round(EMPLOYEES[e.pos].salary*k),0); }
+function share(cat){ const w=gameState.marketWins[cat]||0, l=gameState.marketLosses[cat]||0; return Math.round(w/(w+l+2)*100); }
+function computeTitle(){
+  const s=gameState.stats;
+  if((gameState.prestigeCount||0)>0) return 'Дело+ '+gameState.prestigeCount;
+  if(s.problemsFound>=20) return 'Гроза заточек';
+  if(s.contractsCompleted>=5) return 'Надёжный подрядчик';
+  if(s.tendersWon>=10) return 'Ветеран торгов';
+  if(s.tendersWon>=3) return 'Народный поставщик';
+  return 'Новичок госзаказа';
+}
+
+// ========== ЭКСПОРТ / ИМПОРТ СЕЙВА ==========
+function exportSave(){
+  const s=localStorage.getItem(SAVE_KEY);
+  if(!s){ notify('warning','Нет сохранения','Сначала сыграйте или нажмите «Продолжить»'); return; }
+  if(window.NativeSave){
+    // Android-версия: пишем файл в «Загрузки» через нативный мост
+    try{
+      const ok=NativeSave.save('goszakupki-save-v15.json', s);
+      if(ok) notify('success','💾 Сейв экспортирован','Файл goszakupki-save-v15.json в «Загрузки»');
+      else notify('error','Ошибка экспорта','Не удалось записать файл');
+    }catch(e){ notify('error','Ошибка экспорта', String(e)); }
+    return;
+  }
+  try{
+    const blob=new Blob([s],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='goszakupki-save-v15.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    notify('success','💾 Сейв экспортирован','Файл goszakupki-save-v15.json скачан');
+  }catch(e){ notify('error','Ошибка экспорта','Браузер заблокировал скачивание'); }
+}
+function importSave(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(typeof d!=='object'||d===null||typeof d.day!=='number'||d.day<1||typeof d.mainAccount!=='number'||typeof d.nerves!=='number'){ throw new Error('not a save'); }
+      localStorage.setItem(SAVE_KEY, r.result);
+      notify('success','📂 Сейв импортирован','Перезагрузка…');
+      setTimeout(()=>location.reload(),1200);
+    }catch(e){ notify('error','Файл не подошёл','Это не сейв игры'); }
+  };
+  r.readAsText(file);
+}
+
+function showGameOver(){
+  const canCure = gameState.mainAccount>=100000;
+  setH('gameoverContent', `
+    <div style="text-align:center">
+      <div style="font-size:4em">💔</div>
+      <h2>Выгорание</h2>
+      <p>Нервы достигли нуля. Забег окончен.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px">
+        <button class="btn btn-warning" ${canCure?'':'disabled'} onclick="cure()">🏖 Лечение (−100 000 ₽, нервы → 70)</button>
+        <button class="btn" onclick="resetRun(false)">🔄 Начать заново</button>
+        <button class="btn btn-secondary" onclick="closeModal('gameoverModal'); backToMenu();">В меню</button>
+      </div>
+      <p style="margin-top:12px;font-size:.85em;color:#666">Достижения, титулы, кейсы и престиж сохраняются.</p>
+    </div>`);
+  $('gameoverModal').classList.add('active');
+}
+function cure(){
+  if(gameState.mainAccount<100000) return;
+  gameState.mainAccount-=100000; gameState.nerves=70; gameState.gameOver=false;
+  addTx('Лечение после выгорания', -100000);
+  closeModal('gameoverModal');
+  notify('success','Вы вылечены','Нервы 70%');
+  updateAll(); saveGame();
+}
+function resetRun(toMenu){
+  const keepAch=gameState.achievements, keepProfile=gameState.profile, mode=gameState.mode;
+  const keepMeta={cases:gameState.cases, prestigeCount:gameState.prestigeCount, rp:gameState.rp, techs:gameState.techs, streak:gameState.streak, lastLogin:gameState.lastLogin, dailyClaim:gameState.dailyClaim, honestCount:gameState.honestCount, achProgress:gameState.achProgress};
+  Object.assign(gameState, defaultState());
+  gameState.achievements=keepAch; gameState.profile=keepProfile; gameState.mode=mode;
+  Object.assign(gameState, keepMeta);
+  applyModeStart(mode);
+  generateDayTenders(); generateNews(); genChallenges(true);
+  closeModal('gameoverModal'); saveGame();
+  if(toMenu){ backToMenu(); } else {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    $('gameScreen').classList.add('active');
+    renderTenderTable(); refreshStage(); updateAll();
+  }
+  notify('info','Новый забег','День 1. Удачи!');
+}
+function wipeSave(){
+  if(confirm('Удалить сохранение ПОЛНОСТЬЮ (включая достижения и престиж)?')){ localStorage.removeItem(SAVE_KEY); location.reload(); }
+}
+function applyModeStart(mode){
+  const mult=Math.pow(2, gameState.prestigeCount||0);
+  if(mode==='campaign'){ gameState.mainAccount=50000*mult; gameState.creditLimit=1000000; }
+  else if(mode==='hardcore'){ gameState.mainAccount=50000*mult; gameState.nerves=80; gameState.creditLimit=500000; }
+  else if(mode==='speedrun'){ gameState.mainAccount=1000000*mult; gameState.creditLimit=5000000; }
+  else { gameState.mainAccount=50000000; gameState.creditLimit=100000000; }
+}
+function startGame(mode){
+  const keepAch=gameState.achievements, keepProfile=gameState.profile;
+  const keepMeta={cases:gameState.cases, prestigeCount:gameState.prestigeCount, rp:gameState.rp, techs:gameState.techs, streak:gameState.streak, lastLogin:gameState.lastLogin, dailyClaim:gameState.dailyClaim, honestCount:gameState.honestCount, achProgress:gameState.achProgress};
+  Object.assign(gameState, defaultState());
+  gameState.achievements=keepAch; gameState.profile=keepProfile; gameState.mode=mode;
+  Object.assign(gameState, keepMeta);
+  applyModeStart(mode);
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('gameScreen').classList.add('active');
+  refreshStage(); generateDayTenders(); generateNews(); genChallenges(true); renderTenderTable(); updateAll(); saveGame();
+  notify('info','Игра начата','Режим: '+mode);
+}
+function continueGame(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('gameScreen').classList.add('active');
+  if(!gameState.dayTenders || !gameState.dayTenders.length) generateDayTenders();
+  if(!gameState.challenges || !gameState.challenges.length) genChallenges(true);
+  renderTenderTable(); refreshStage(); updateAll();
+  if(gameState.nerves<=0){ showGameOver(); }
+}
+function init(){
+  loadGame();
+  if(gameState.employees && gameState.employees.length && typeof gameState.employees[0]==='string'){
+    gameState.employees = gameState.employees.map(p=>({pos:p, level:1, exp:0}));
+  }
+  if(!gameState.dayTenders || !gameState.dayTenders.length) generateDayTenders();
+  if(!gameState.challenges || !gameState.challenges.length) genChallenges(true);
+  refreshStage(); updateAll(); renderTenderTable();
+  const hasSave = localStorage.getItem(SAVE_KEY);
+  if(hasSave && gameState.day>1 && gameState.nerves>0){ const b=$('continueBtn'); if(b) b.style.display='inline-block'; }
+  const b=$('soundBtn'); if(b) b.textContent=gameState.soundOn?'🔊':'🔇';
+  const bm=$('soundBtnMenu'); if(bm) bm.textContent=(gameState.soundOn?'🔊 Звук: вкл':'🔇 Звук: выкл');
+}
+function selectPlatform(p, el){
+  gameState.platform=p;
+  document.querySelectorAll('.platform-card').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  const names={rts:'РТС-тендер',sber:'Сбербанк-АСТ',etp:'ЕЭТП',mir:'МИР'};
+  setT('currentPlatform','Площадка: '+names[p]);
+  sfx('click'); notify('success','Площадка выбрана', names[p]);
+}
+function switchTab(name, navEl){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  const c=$('tab-'+name); if(c) c.classList.add('active');
+  if(name==='bank') updateBank();
+  if(name==='market') updateMarket();
+  if(name==='company') updateCompany();
+  if(name==='accounting') updateAccounting();
+  if(name==='fas') updateFas();
+  if(name==='contracts') updateContracts();
+  if(name==='life') updateLife();
+  if(name==='news') updateNews();
+  if(name==='calendar') updateCalendar();
+  if(name==='stats') updateStats();
+  if(name==='achievements') renderAchievements('achievementsList');
+}
+function stageIndex(){
+  const w=gameState.stats.tendersWon, m=gameState.mainAccount;
+  if(w>=25||m>=50000000) return 4;
+  if(w>=12||m>=10000000) return 3;
+  if(w>=6||m>=1000000) return 2;
+  if(w>=2||m>=300000) return 1;
+  return 0;
+}
+function refreshStage(){
+  const i=stageIndex();
+  setT('stageDisplay', STAGES[i].name); setT('menuStage', STAGES[i].name);
+  setT('titleDisplay', computeTitle());
+  if(i>=2) unlockProgress('stage_up', i);
+}
+function genChallenges(force){
+  const wk=Math.floor((gameState.day-1)/7);
+  if(!force && wk===gameState.week && gameState.challenges && gameState.challenges.length) return;
+  gameState.week=wk;
+  gameState.weekStats={wins:0,fas:0,contracts:0,finds:0,lots:0};
+  const ids=Object.keys(CH_POOL).sort(()=>Math.random()-0.5).slice(0,3);
+  gameState.challenges=ids.map(id=>({id, text:CH_POOL[id].text, target:CH_POOL[id].target, claimed:false}));
+}
+function rollSeasonMod(){
+  const r=Math.random();
+  gameState.seasonMod = r<0.25?'elections': r<0.5?'digital': r<0.75?'austerity':'none';
+  notify('info','Модификатор сезона', SEASON_MODS[gameState.seasonMod]);
+}
+function goldenZatochka(){
+  const cand=tendersDB.filter(t=>t.risk==='high');
+  const t=cand[Math.floor(Math.random()*cand.length)];
+  gameState.news.unshift({text:'🏆 Антипремия «Золотая заточка» сезона: '+t.name+' ('+t.customer+')', type:'urgent', day:gameState.day});
+  notify('warning','🏆 Золотая заточка','Антипремия сезона: '+t.name);
+}
+function generateDayTenders(){
+  const max=STAGES[stageIndex()].maxTender;
+  let pool=tendersDB.filter(t=>t.price<=max);
+  if(pool.length<3) pool=tendersDB.filter(t=>t.price<=100000);
+  const shuffled=[...pool].sort(()=>Math.random()-0.5);
+  const count=Math.min(shuffled.length, 4+Math.floor(Math.random()*3));
+  const edoBonus = gameState.techs.edo? 1:0;
+  let list = shuffled.slice(0,count).map((t,i)=>({...t, id:gameState.day*100+i, status:'active', daysLeft:t.deadline+edoBonus}));
+  if(gameState.seasonMod==='elections'){
+    const c=tendersDB.filter(t=>t.category==='construction');
+    if(c.length){ const t={...c[Math.floor(Math.random()*c.length)]}; list.push({...t, id:gameState.day*100+90, status:'active', daysLeft:t.deadline+edoBonus}); }
+  }
+  if(gameState.seasonMod==='digital'){
+    const c=tendersDB.filter(t=>t.category==='it');
+    if(c.length){ const t={...c[Math.floor(Math.random()*c.length)]}; list.push({...t, id:gameState.day*100+91, status:'active', daysLeft:t.deadline+edoBonus}); }
+  }
+  if(gameState.seasonMod==='austerity'){
+    list = list.map(t=>({...t, price:Math.round(t.price*0.8), security:Math.round(t.security*0.8)}));
+  }
+  gameState.dayTenders=list;
+  const cats=Object.keys(CAT_BASE);
+  const hot=cats.find(c=>share(c)>60);
+  if(hot){
+    gameState.dayTenders.push({
+      number:'PERSONAL-'+gameState.day, name:'Личный заказ: '+CAT_NAMES[hot], customer:'Постоянный заказчик',
+      price: Math.round(CAT_BASE[hot]*3*1.1), security: Math.round(CAT_BASE[hot]*3*1.1*0.05), deadline: 12+ (gameState.techs.edo?1:0),
+      type:'44', category:hot, risk:'low', analysisType:'price', personal:true,
+      tz:{item:'Поставка по личному заказу', qty:'1 лот', delivery:'30 дней', payment:'100% после поставки', warranty:'1 год', requirements:['Наличие контрактов в категории']}
+    });
+  }
+}
+function renderTenderTable(){
+  let list=gameState.dayTenders.filter(t=>t.status==='active');
+  const name=($('searchName')?.value||'').toLowerCase();
+  if(name) list=list.filter(t=>t.name.toLowerCase().includes(name));
+  const pf=parseInt($('searchPriceFrom')?.value)||0, pt=parseInt($('searchPriceTo')?.value)||Infinity;
+  list=list.filter(t=>t.price>=pf&&t.price<=pt);
+  const st=$('searchType')?.value; if(st!=='all') list=list.filter(t=>t.type===st);
+  const sc=$('searchCategory')?.value; if(sc!=='all') list=list.filter(t=>t.category===sc);
+  const tbody=$('tendersBody'); if(!tbody) return 0;
+  if(!list.length){ tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px">Активных тендеров нет — завершите день</td></tr>'; return 0; }
+  tbody.innerHTML=list.map(t=>{
+    const locked=t.price>STAGES[stageIndex()].maxTender;
+    const stCls = t.personal? 'status-personal' : (locked? 'status-locked' : 'status-active');
+    const stTxt = t.personal? '💌 Личный' : (locked? '🔒 Недоступно' : (t.risk==='low'?'Низкий':t.risk==='medium'?'Средний':'Высокий'));
+    return `<tr>
+      <td>${t.number}</td><td><strong>${t.name}</strong></td><td>${t.customer}</td>
+      <td>${fmt(t.price)} ₽</td><td>${fmt(t.security)} ₽</td><td>${t.daysLeft} дн.</td>
+      <td>${t.type}-ФЗ</td><td><span class="tender-status ${stCls}">${stTxt}</span></td>
+      <td>
+        <button class="action-btn action-btn-info" onclick="showTZ(${t.id})">📋 ТЗ</button>
+        <button class="action-btn action-btn-primary" ${locked?'disabled':''} onclick="checkRequirements(${t.id})">✅ Анализ</button>
+      </td></tr>`;
+  }).join('');
+  return list.length;
+}
+function searchTenders(){ sfx('click'); const n=renderTenderTable(); notify('success','Поиск','Найдено: '+n); }
+function clearSearch(){
+  ['searchName','searchPriceFrom','searchPriceTo'].forEach(id=>{const n=$(id); if(n)n.value='';});
+  $('searchType').value='all'; $('searchCategory').value='all';
+  renderTenderTable();
+}
+function showTZ(id){
+  const t=gameState.dayTenders.find(x=>x.id===id);
+  if(!t){ notify('warning','Список обновлён','Тендер завершён или сменился день'); renderTenderTable(); return; }
+  setH('tzContent', `
+    <h2>${t.name}</h2>
+    <p><strong>Номер:</strong> ${t.number}</p>
+    <p><strong>Заказчик:</strong> ${t.customer}</p>
+    <p><strong>НМЦК:</strong> ${fmt(t.price)} ₽ | <strong>Обеспечение:</strong> ${fmt(t.security)} ₽</p>
+    <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0">
+      <h4>📦 ${t.tz.item}</h4><p>Кол-во: ${t.tz.qty}</p>
+      <p>Срок: ${t.tz.delivery} | Оплата: ${t.tz.payment}</p>
+      <p>Гарантия: ${t.tz.warranty}</p>
+      <h4 style="margin-top:10px">✅ Требования:</h4><ul style="margin-left:20px">${t.tz.requirements.map(r=>`<li>${r}</li>`).join('')}</ul>
+    </div>
+    <button class="btn" onclick="closeModal('tzModal'); checkRequirements(${t.id})">📊 Анализ требований</button>`);
+  $('tzModal').classList.add('active');
+}
+function checkRequirements(id){
+  const t=gameState.dayTenders.find(x=>x.id===id);
+  if(!t){ notify('warning','Список обновлён','Тендер завершён или сменился день'); renderTenderTable(); return; }
+  if(gameState.rnpDays>0){ notify('error','РНП','Вы не можете участвовать'); return; }
+  if(gameState.nerves<10){ notify('error','Нервы на нуле','Отдохните во вкладке «Жизнь»'); return; }
+  if(gameState.ecpDays<=0){ notify('error','ЭЦП истекла','Продлите в офисе'); return; }
+  const issues=[];
+  if(t.tz.requirements.some(r=>r.includes('СРО')) && !gameState.certifications.some(c=>c.startsWith('sro'))) issues.push('Нужен допуск СРО');
+  if(t.tz.requirements.some(r=>/фарм/i.test(r)) && !gameState.certifications.includes('pharma')) issues.push('Нужна лицензия Фарм');
+  const funds=gameState.mainAccount+gameState.specialAccount;
+  if(funds < t.security) issues.push('Недостаточно средств для обеспечения');
+  const consortiumAvailable = t.price>=10000000 && funds>=Math.floor(t.security/2);
+  setH('tzContent', `
+    <h2>📊 Анализ: ${t.name}</h2>
+    <div style="padding:10px;border-radius:8px;margin:10px 0;background:${t.risk==='low'?'#d4edda':t.risk==='medium'?'#fff3cd':'#f8d7da'}">${t.risk==='low'?'🟢 Низкий риск':t.risk==='medium'?'🟡 Средний риск':'🔴 Высокий риск'}</div>
+    <p>НМЦК: ${fmt(t.price)} ₽ | Обеспечение: ${fmt(t.security)} ₽</p>
+    ${issues.length?`<div style="background:#ffebee;padding:12px;border-radius:8px;margin:10px 0"><h4>⚠️ Проблемы:</h4>${issues.map(i=>`<p>${i}</p>`).join('')}</div>`:'<div style="background:#e8f5e9;padding:12px;border-radius:8px;margin:10px 0">✅ Всё в порядке</div>'}
+    ${consortiumAvailable?`<div class="hint-box">🤝 Доступен консорциум: обеспечение /2, но прибыль /2.</div>`:''}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:15px">
+      <button class="btn" ${issues.length?'disabled':''} onclick="closeModal('tzModal'); startAnalysis(${t.id})">✍️ Подать заявку</button>
+      ${consortiumAvailable?`<button class="btn btn-secondary" ${issues.length?'disabled':''} onclick="gameState.consortiumMode=true; closeModal('tzModal'); startAnalysis(${t.id})">🤝 Заявка в консорциуме (обеспечение /2)</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal('tzModal')">Закрыть</button>
+    </div>`);
+  $('tzModal').classList.add('active');
+}
+
+function startAnalysis(id){
+  const t=gameState.dayTenders.find(x=>x.id===id); if(!t) return;
+  gameState.currentTender=t;
+  const base=gameState.nerves<30?40:60;
+  const tenderBonus = (hasEmp('tender')&&gameState.morale>=50)? Math.round(10*empMult('tender')) : 0;
+  const bonus=tenderBonus+(gameState.owned.includes('pc')?10:0)+(gameState.techs.autoanal?10:0);
+  let total=base+bonus;
+  if(gameState.strategy==='quality') total=Math.max(20,total-5);
+  setT('analysisTitle', t.analysisType==='find'?'🔍 Найди заточку':t.analysisType==='docs'?'📁 Собери документы':'🧮 Расчёт НМЦК');
+  $('analysisModal').classList.add('active');
+  if(gameState.nerves<30) notify('warning','Нервы на пределе','Время анализа сокращено до 40 сек!');
+  if(t.analysisType==='find'){
+    const probTexts=[
+      'Поставка в течение 3 рабочих дней с момента заключения.',
+      'Поставщик должен иметь опыт не менее 5 лет.',
+      'Товары брендов: Xerox, HP, Canon или эквивалент.',
+      'Обеспечение 50 000 рублей сверх нормы.',
+      'Подача заявок до 10:00 завтрашнего дня.',
+      'Требуется лицензия МЧС без основания.'
+    ];
+    const cleanTexts=[
+      'Оплата производится в течение 30 банковских дней после подписания акта.',
+      'Доставка осуществляется транспортом поставщика по адресу заказчика.',
+      'Гарантийный срок на товар составляет 12 месяцев с даты поставки.',
+      'Участник должен быть зарегистрирован в ЕГРЮЛ или ЕГРИП.',
+      'Цена включает все налоги и обязательные платежи поставщика.'
+    ];
+    const need=2;
+    const ps=[...probTexts].sort(()=>Math.random()-0.5).slice(0,need);
+    const cs=[...cleanTexts].sort(()=>Math.random()-0.5).slice(0,4);
+    const items=[...ps.map(x=>({x,bad:1})),...cs.map(x=>({x,bad:0}))].sort(()=>Math.random()-0.5);
+    setH('analysisContent', `<p>Найдите ${need} подозрительных места (таймер ${total} сек). Кликайте по предложениям — за ошибку −3 нерва:</p>
+      <div style="background:#f8f9fa;padding:15px;border-radius:8px;line-height:1.6">${items.map(it=>`<div class="zat-sent" data-bad="${it.bad}" data-clicked="0">${it.x}</div>`).join('')}</div>
+      <div class="progress-bar"><div class="progress-fill" id="anProgress" style="width:0%">0/${need}</div></div>`);
+    let found=0; const t0=Date.now();
+    document.querySelectorAll('.zat-sent').forEach(el=>{
+      el.onclick=function(){
+        if(this.dataset.clicked==='1')return;
+        this.dataset.clicked='1';
+        if(this.dataset.bad==='1'){
+          this.classList.add('zat-found'); found++;
+          gameState.stats.problemsFound++; gameState.weekStats.finds++; sfx('click');
+          const p=$('anProgress'); if(p){p.style.width=(found/need*100)+'%'; p.textContent=found+'/'+need;}
+          if(found>=need){
+            if((Date.now()-t0)/1000<20) notify('success','Быстро!','+бонус к рейтингу');
+            stopAnalysisClock(); closeModal('analysisModal'); beginAuction(t);
+          }
+        } else {
+          this.classList.add('zat-wrong'); gameState.nerves=Math.max(0,gameState.nerves-3); sfx('error');
+          notify('error','Это не заточка','−3 нерва'); updateAll();
+        }
+      };
+    });
+    startAnalysisClock(total, ()=>{ closeModal('analysisModal'); notify('error','Время вышло','Анализ провален'); gameState.nerves-=10; updateAll(); });
+  }
+  else if(t.analysisType==='docs'){
+    const correct={office:['Выписка ЕГРЮЛ','ИНН/ОГРН','Справка об отсутствии задолженности','Декларация ТР ТС'],it:['Выписка ЕГРЮЛ','ИНН/ОГРН','Сертификаты на ПО','Справка об отсутствии задолженности'],construction:['Выписка ЕГРЮЛ','Допуск СРО','Справка об отсутствии задолженности','Бухотчётность'],medical:['Выписка ЕГРЮЛ','Лицензия','Регистрационное удостоверение','Справка об отсутствии задолженности'],food:['Выписка ЕГРЮЛ','Декларации ТР ТС','Ветеринарные справки','Справка об отсутствии задолженности'],transport:['Выписка ЕГРЮЛ','Лицензия на перевозки','ОСАГО','Справка об отсутствии задолженности'],service:['Выписка ЕГРЮЛ','Справка об отсутствии задолженности','Бухотчётность','Трудовые договоры']}[t.category]||['Выписка ЕГРЮЛ','ИНН/ОГРН','Справка об отсутствии задолженности','Декларация'];
+    const wrong=['Лицензия на алкоголь','Разрешение на оружие','Ветеринарный паспорт (не требуется)'];
+    const all=[...correct,...wrong].sort(()=>Math.random()-0.5);
+    const allowedBad=gameState.owned.includes('printer')?1:0;
+    const moraleLow = gameState.employees.length>0 && gameState.morale<50;
+    const timerTotal = moraleLow? Math.max(15,total-10) : total;
+    setH('analysisContent', `<p>Выберите ${correct.length} нужных документа (таймер ${timerTotal} сек)${allowedBad?'. Принтер: допустима 1 ошибка':''}</p>
+      ${moraleLow?'<div class="hint-box" style="background:#ffebee;border-left-color:#f44336">😫 Уставший сотрудник уже подкинул лишний документ в стопку — уберите его!</div>':''}
+      ${all.map(d=>`<div class="doc-item" data-ok="${correct.includes(d)}">📄 ${d}</div>`).join('')}
+      <button class="btn" onclick="checkDocs(${correct.length})">✅ Проверить</button>`);
+    document.querySelectorAll('.doc-item').forEach(el=>el.onclick=()=>{el.classList.toggle('selected'); sfx('click');});
+    if(moraleLow){
+      const wrongs=[...document.querySelectorAll('.doc-item')].filter(e=>e.dataset.ok==='false');
+      if(wrongs.length){ wrongs[Math.floor(Math.random()*wrongs.length)].classList.add('selected'); }
+    }
+    startAnalysisClock(timerTotal, ()=>{ closeModal('analysisModal'); notify('error','Время вышло','Документы не собраны'); gameState.nerves-=10; updateAll(); });
+  }
+  else {
+    const parts=[['Товар/услуга',0.6],['Доставка',0.1],['НДС 20%',0.2],['Обеспечение',0.05],['Накладные',0.05]];
+    setH('analysisContent', `<p>Рассчитайте составляющие НМЦК <strong>${fmt(t.price)} ₽</strong> (таймер ${total} сек):</p>
+      <div class="hint-box">💡 Подсказка: каждая строка = НМЦК × её процент. Серые цифры в полях — готовые подсказки. Допуск ±10%.</div>
+      ${parts.map((p,i)=>`<div class="price-row"><span>${p[0]} <small style="color:#888">(${Math.round(p[1]*100)}% НМЦК)</small></span><input type="number" id="pi${i}" data-c="${Math.floor(t.price*p[1])}" placeholder="${fmt(Math.floor(t.price*p[1]))}"></div>`).join('')}
+      <div style="text-align:right;font-weight:bold;margin:10px 0">Итого: <span id="pTotal">0</span> ₽ (≈ ${fmt(t.price)} ₽)</div>
+      <button class="btn" onclick="checkPriceCalc(${t.price})">✅ Проверить</button>
+      <button class="btn btn-secondary" onclick="fillPriceHint(${t.price})">💡 Заполнить подсказки (−5 нервов)</button>`);
+    parts.forEach((_,i)=>{ const n=$('pi'+i); if(n) n.oninput=()=>{ let s=0; parts.forEach((__,j)=>{s+=parseInt($('pi'+j)?.value||0);}); setT('pTotal', fmt(s)); }; });
+    startAnalysisClock(total, ()=>{ closeModal('analysisModal'); notify('error','Время вышло','Расчёт не завершён'); gameState.nerves-=10; updateAll(); });
+  }
+}
+function fillPriceHint(nmck){
+  const parts=[0.6,0.1,0.2,0.05,0.05]; let s=0;
+  parts.forEach((p,i)=>{ const n=$('pi'+i); const v=Math.floor(nmck*p); if(n) n.value=v; s+=v; });
+  setT('pTotal', fmt(s));
+  gameState.nerves=Math.max(0,gameState.nerves-5);
+  notify('info','Подсказка применена','−5 нервов');
+  updateAll();
+}
+let analysisClock=null;
+function startAnalysisClock(sec,onEnd){
+  stopAnalysisClock();
+  let t=sec;
+  analysisClock=setInterval(()=>{ t--; if(t<=0){ stopAnalysisClock(); onEnd(); } },1000);
+}
+function stopAnalysisClock(){ if(analysisClock){clearInterval(analysisClock); analysisClock=null;} }
+function checkDocs(need){
+  const sel=[...document.querySelectorAll('.doc-item.selected')];
+  const ok=sel.filter(e=>e.dataset.ok==='true').length;
+  const bad=sel.length-ok;
+  const allowedBad=gameState.owned.includes('printer')?1:0;
+  if(ok===need&&bad<=allowedBad){ stopAnalysisClock(); closeModal('analysisModal'); notify('success','Документы верны!',''); beginAuction(gameState.currentTender); }
+  else { notify('error','Ошибка','Верно: '+ok+', лишних: '+bad); gameState.nerves-=10; updateAll(); }
+}
+function checkPriceCalc(nmck){
+  let ok=0;
+  for(let i=0;i<5;i++){ const n=$('pi'+i); if(!n)continue; const v=parseInt(n.value)||0, c=parseInt(n.dataset.c); if(Math.abs(v-c)<=c*0.1) ok++; }
+  if(ok>=4){ stopAnalysisClock(); closeModal('analysisModal'); notify('success','Расчёт верный!',''); beginAuction(gameState.currentTender); }
+  else { notify('warning','Неточно','Верных полей: '+ok+'/5'); gameState.nerves-=5; updateAll(); }
+}
+
+function beginAuction(t){
+  if(!t) return;
+  if(gameState.nerves<10){ notify('error','Нервы на нуле','Торги недоступны'); return; }
+  let sec=t.security;
+  if(gameState.consortiumMode){ sec=Math.floor(sec/2); }
+  if(gameState.mainAccount < sec){ notify('error','Недостаточно средств','Нужно '+fmt(sec)+' ₽ обеспечения'); return; }
+  gameState.mainAccount-=sec; gameState.specialAccount+=sec; gameState.blockedSecurities+=sec;
+  gameState.activeSecurities.push({tenderId:t.id, tenderName:t.name, amount:sec, date:'День '+gameState.day});
+  addTx('Обеспечение заявки '+t.number+(gameState.consortiumMode?' (консорциум)':''), -sec);
+  notify('success','Обеспечение внесено', fmt(sec)+' ₽ на спецсчёте'+(gameState.consortiumMode?' (консорциум)':''));
+  openAuction(t);
+}
+function openAuction(t){
+  gameState.currentTender=t; gameState.nmck=t.price; gameState.myBestBid=null; gameState.stableTicks=0;
+  const names=['ООО "Победа"','ИП Иванов','АО "Стройсервис"','ООО "ТендерПро"','ЗАО "Конкурент"'];
+  gameState.competitors=[];
+  const cnt = t.personal? 1 : 2+Math.floor(Math.random()*3);
+  for(let i=0;i<cnt;i++) gameState.competitors.push({name:names[Math.floor(Math.random()*names.length)], bid:t.price*(t.personal?0.95:0.75+Math.random()*0.2)});
+  priceHistory=[t.price];
+  const m=$('auctionModal'); if(m) m.classList.add('active');
+  setT('auctionTenderName', t.name);
+  initChart(); updateAuctionUI(); startAuctionClock2(30);
+}
+function marketPrice(){
+  let m=Infinity;
+  gameState.competitors.forEach(c=>{ if(c.bid<m)m=c.bid; });
+  if(gameState.myBestBid!==null && gameState.myBestBid<m) m=gameState.myBestBid;
+  return m===Infinity? gameState.nmck : m;
+}
+function startAuctionClock2(sec){
+  stopAuctionClock2();
+  let t=sec; renderClock(t);
+  gameState.auctionTimer=setInterval(()=>{
+    t--; renderClock(t);
+    if(t<=10) sfx('tick');
+    competitorTick(); updateAuctionUI();
+    if(gameState.myBestBid!==null){
+      const lowest=Math.min(...gameState.competitors.map(c=>c.bid));
+      if(gameState.myBestBid < lowest*0.995) gameState.stableTicks++; else gameState.stableTicks=0;
+      if(gameState.stableTicks>=3){ stopAuctionClock2(); finishAuction(); return; }
+    }
+    if(t<=0){ stopAuctionClock2(); finishAuction(); }
+  },1000);
+}
+function stopAuctionClock2(){ if(gameState.auctionTimer){clearInterval(gameState.auctionTimer); gameState.auctionTimer=null;} }
+function renderClock(t){
+  const el=$('auctionTimer'); if(!el)return;
+  el.textContent='00:'+String(Math.max(0,t)).padStart(2,'0');
+  el.classList.toggle('urgent', t<=10);
+}
+function competitorTick(){
+  const cat=gameState.currentTender? gameState.currentTender.category : 'office';
+  const war = share(cat)>40;
+  let factor = war? 0.90 : 0.93;
+  if(gameState.strategy==='aggression') factor-=0.02;
+  gameState.competitors.forEach(c=>{
+    if(Math.random()<0.55 && c.bid > gameState.nmck*0.52){
+      c.bid = Math.max(gameState.nmck*0.52, c.bid*(factor+Math.random()*0.05));
+    }
+  });
+}
+function initChart(){
+  const cv=$('priceChart'); if(!cv)return;
+  chartCtx=cv.getContext('2d'); cv.width=cv.offsetWidth; cv.height=cv.offsetHeight;
+}
+function drawChart(price){
+  priceHistory.push(price); if(priceHistory.length>60) priceHistory.shift();
+  if(!chartCtx)return;
+  const w=chartCtx.canvas.width,h=chartCtx.canvas.height;
+  chartCtx.clearRect(0,0,w,h);
+  chartCtx.strokeStyle='rgba(255,255,255,.15)'; chartCtx.beginPath();
+  for(let y=0;y<h;y+=20){chartCtx.moveTo(0,y);chartCtx.lineTo(w,y);} chartCtx.stroke();
+  if(priceHistory.length<2)return;
+  const mx=Math.max(...priceHistory), mn=Math.min(...priceHistory), rng=(mx-mn)||1;
+  chartCtx.strokeStyle='#4CAF50'; chartCtx.lineWidth=3; chartCtx.beginPath();
+  priceHistory.forEach((p,i)=>{ const x=i/(priceHistory.length-1)*w; const y=h-((p-mn)/rng)*(h-10)-5; i?chartCtx.lineTo(x,y):chartCtx.moveTo(x,y); });
+  chartCtx.stroke();
+  const lp=priceHistory[priceHistory.length-1];
+  const ly=h-((lp-mn)/rng)*(h-10)-5;
+  chartCtx.fillStyle='#4CAF50'; chartCtx.beginPath(); chartCtx.arc(w-3,ly,5,0,Math.PI*2); chartCtx.fill();
+}
+function updateAuctionUI(){
+  const m=marketPrice();
+  setT('auctionPrice', fmt(m)+' ₽');
+  setT('priceReduction', 'Снижение: '+(((gameState.nmck-m)/gameState.nmck)*100).toFixed(1)+'% от НМЦК');
+  setT('myBid', gameState.myBestBid!==null? fmt(gameState.myBestBid)+' ₽':'—');
+  const listEl=$('competitorsList');
+  if(!listEl) return;
+  if(!gameState.techs.analytics && gameState.myBestBid===null){
+    listEl.innerHTML='<p style="opacity:.85">🔒 Ставки конкурентов скрыты до вашей первой ставки. Изучите «Аналитику рынка», чтобы видеть их сразу.</p>';
+    drawChart(m); return;
+  }
+  const meName = (gameState.profile.name? esc(gameState.profile.type)+' "'+esc(gameState.profile.name)+'"' : 'Ваша компания')+' (вы)';
+  const rows=[];
+  if(gameState.myBestBid!==null) rows.push({name:meName, bid:gameState.myBestBid, me:true});
+  gameState.competitors.forEach(c=>rows.push({name:c.name, bid:c.bid, me:false}));
+  rows.sort((a,b)=>a.bid-b.bid);
+  listEl.innerHTML=rows.map((r,i)=>`<div class="competitor-item ${i===0?'leader':''}" ${r.me?'style="background:rgba(76,175,80,.35);border:1px solid #4CAF50"':''}><span>${r.name}</span><span>${fmt(r.bid)} ₽</span></div>`).join('');
+  drawChart(m);
+}
+function makeBid(p){
+  const m=marketPrice(); let nb=m*(1+p/100);
+  const floorPct=gameState.strategy==='aggression'?0.45:0.5;
+  const floor=gameState.nmck*floorPct;
+  if(nb<floor){
+    nb=floor;
+    notify('info','Пол цены','Ставка ограничена минимумом '+Math.round(floorPct*100)+'% НМЦК'+(floorPct<0.5?' (стратегия «Агрессия»)':''));
+  }
+  gameState.myBestBid=nb; gameState.nerves-=2;
+  sfx('click'); updateAuctionUI(); updateAll();
+}
+function exitAuction(){
+  stopAuctionClock2();
+  if(gameState.currentTender) gameState.currentTender.status='completed';
+  returnSecurity(gameState.currentTender);
+  const m=$('auctionModal'); if(m)m.classList.remove('active');
+  sfx('lose');
+  notify('warning','Выход из торгов','Обеспечение возвращено, тендер убран');
+  gameState.stats.tendersLost++;
+  if(gameState.currentTender) gameState.marketLosses[gameState.currentTender.category]=(gameState.marketLosses[gameState.currentTender.category]||0)+1;
+  gameState.consortiumMode=false;
+  renderTenderTable(); updateAll();
+}
+function returnSecurity(t){
+  if(!t)return;
+  const sec=t.security;
+  if(gameState.specialAccount>=sec) gameState.specialAccount-=sec;
+  gameState.mainAccount+=sec;
+  gameState.blockedSecurities=Math.max(0,gameState.blockedSecurities-sec);
+  gameState.activeSecurities=gameState.activeSecurities.filter(s=>s.tenderId!==t.id);
+  addTx('Возврат обеспечения '+t.number, sec);
+}
+function finishAuction(){
+  const t=gameState.currentTender;
+  const m=$('auctionModal'); if(m)m.classList.remove('active');
+  if(!t) return;
+  const mine=gameState.myBestBid;
+  const lowest=Math.min(...gameState.competitors.map(c=>c.bid));
+  const won = mine!==null && mine<=lowest;
+  returnSecurity(t);
+  t.status='completed';
+  if(won){
+    const prestigeMult = 1 + 0.1*(gameState.prestigeCount||0);
+    const advance = mine * (gameState.consortiumMode? 0.075 : 0.15) * prestigeMult;
+    gameState.mainAccount+=advance;
+    gameState.stats.tendersWon++;
+    gameState.rating+=15 + (gameState.strategy==='quality'?2:0);
+    gameState.rp+=1; gameState.weekStats.wins++;
+    gameState.marketWins[t.category]=(gameState.marketWins[t.category]||0)+1;
+    gameState.cases.unshift({day:gameState.day, name:t.name, sum:Math.round(mine), result:'win'});
+    gameState.contracts.push({name:t.name, cat:t.category, amount:mine*(gameState.consortiumMode?0.425:0.85), progress:0, deadlineDay: gameState.day + Math.max(10, t.deadline+10), done:false, failed:false, insured:false, sub:false, consortium:!!gameState.consortiumMode, debt:null});
+    addTx('Аванс по контракту '+t.number, advance);
+    if(mine <= gameState.nmck*0.5) unlockAchievement('demper');
+    unlockProgress('first_tender', gameState.stats.tendersWon);
+    unlockProgress('tender_5', gameState.stats.tendersWon);
+    unlockProgress('tender_10', gameState.stats.tendersWon);
+    sfx('win'); confetti();
+    notify('success','🎉 Победа!','Аванс '+fmt(advance)+' ₽, +1 RP. Контракт во вкладке «Контракты»');
+    if(Math.random()<0.15) setTimeout(()=>triggerDilemma(),800);
+  } else {
+    gameState.stats.tendersLost++;
+    gameState.marketLosses[t.category]=(gameState.marketLosses[t.category]||0)+1;
+    gameState.cases.unshift({day:gameState.day, name:t.name, sum:Math.round(mine||0), result:'lose'});
+    gameState.nerves-=10; sfx('lose');
+    notify('warning','Тендер проигран','Обеспечение возвращено');
+  }
+  if(gameState.cases.length>30) gameState.cases.length=30;
+  gameState.consortiumMode=false;
+  renderTenderTable(); refreshStage(); updateAll(); saveGame();
+}
+function confetti(){
+  const cols=['#f44336','#4CAF50','#2196F3','#FFEB3B','#9c27b0'];
+  for(let i=0;i<60;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.background=cols[Math.floor(Math.random()*cols.length)];
+    c.style.animationDuration=(2+Math.random()*2)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4500);
+  }
+}
+
+function updateMarket(){
+  const cats=Object.keys(CAT_BASE);
+  setH('marketList', cats.map(c=>{
+    const idx=gameState.priceIndex[c], prev=gameState.pricePrev[c]||idx;
+    const arrow= idx>prev+0.001? '📈': idx<prev-0.001? '📉':'';
+    return `<div class="employee-card"><div><strong>${CAT_NAMES[c]}</strong><br><small>Индекс: ${(idx*100).toFixed(0)}% ${arrow} | доля рынка: ${share(c)}%</small></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-small" onclick="buyLot('${c}')">Купить лот ${fmt(CAT_BASE[c]*idx)}₽</button>
+        <button class="btn btn-small btn-secondary" onclick="sellLot('${c}')">Продать лот</button>
+      </div></div>`;
+  }).join(''));
+  const inv=gameState.inventory;
+  const rows=[];
+  Object.keys(inv).forEach(c=>{ (inv[c]||[]).forEach((lot,i)=>{ rows.push(`<div class="employee-card"><div><strong>${CAT_NAMES[c]}</strong> лот #${i+1}<br><small>Куплен по индексу ${(lot.index*100).toFixed(0)}% (${fmt(lot.cost)}₽) | сейчас ${(gameState.priceIndex[c]*100).toFixed(0)}%</small></div></div>`); }); });
+  setH('inventoryList', rows.length? rows.join('') : '<p style="color:#666">Пусто</p>');
+}
+function buyLot(c){
+  const cost=Math.round(CAT_BASE[c]*gameState.priceIndex[c]);
+  if(gameState.mainAccount<cost){ notify('error','Недостаточно средств','Нужно '+fmt(cost)+' ₽'); return; }
+  gameState.mainAccount-=cost;
+  (gameState.inventory[c]=gameState.inventory[c]||[]).push({cost, index:gameState.priceIndex[c]});
+  gameState.weekStats.lots++;
+  addTx('Лот на склад: '+CAT_NAMES[c], -cost);
+  sfx('coin'); notify('success','Лот куплен', CAT_NAMES[c]+' за '+fmt(cost)+' ₽');
+  updateAll(); updateMarket(); saveGame();
+}
+function sellLot(c){
+  const lots=gameState.inventory[c];
+  if(!lots||!lots.length){ notify('warning','Нет лотов','Склад пуст по категории'); return; }
+  const lot=lots.pop();
+  const cur=Math.round(CAT_BASE[c]*gameState.priceIndex[c]);
+  gameState.mainAccount+=cur;
+  const pnl=cur-lot.cost;
+  gameState.stats.traderPnl=(gameState.stats.traderPnl||0)+pnl;
+  if(gameState.stats.traderPnl>=100000) unlockAchievement('trader');
+  addTx('Продажа лота: '+CAT_NAMES[c], cur);
+  if(pnl>=0){ sfx('coin'); notify('success','Продажа лота','Прибыль +'+fmt(pnl)+' ₽'); }
+  else { sfx('lose'); notify('warning','Продажа лота','Убыток '+fmt(pnl)+' ₽'); }
+  updateAll(); updateMarket(); saveGame();
+}
+
+function updateContracts(){
+  const list=$('contractsList');
+  if(!gameState.contracts.length){ list.innerHTML='<p style="color:#666">Нет контрактов</p>'; return; }
+  const inc=gameState.owned.includes('car')?35:25;
+  list.innerHTML=gameState.contracts.map((c,i)=>{
+    const left=c.deadlineDay-gameState.day;
+    const status=c.done?'✅ Исполнен':c.failed?'❌ Провален':(left<0?`🔥 Просрочка ${-left} дн.`:`⏳ Срок: день ${c.deadlineDay} (осталось ${left})`);
+    let btns='';
+    if(!c.done&&!c.failed){
+      btns+=`<button class="btn btn-small" onclick="workContract(${i})">⚡ Работать (+${inc}%)</button>`;
+      if(!c.insured&&c.progress===0) btns+=`<button class="btn btn-small btn-secondary" onclick="insureContract(${i})">🛡 Страхование (${fmt(c.amount*0.03)}₽)</button>`;
+      if(!c.sub) btns+=`<button class="btn btn-small btn-warning" onclick="subcontract(${i})">🤝 Субподряд +50% (${fmt(c.amount*0.2)}₽)</button>`;
+    }
+    let debtHtml='';
+    if(c.debt){
+      const d=c.debt;
+      if(d.stage===0) debtHtml=`<div class="debt-box">⚠️ Заказчик обанкротился! Долг: ${fmt(d.amount)} ₽<br><button class="btn btn-small btn-warning" onclick="debtClaim(${i})">📄 Претензия (10 000₽)</button> <button class="btn btn-small btn-danger" onclick="debtWriteOff(${i})">Списать долг</button></div>`;
+      else if(d.stage===1) debtHtml=`<div class="debt-box">📄 Претензия подана. Решение через ${d.daysLeft} дн.</div>`;
+      else if(d.stage===2) debtHtml=`<div class="debt-box">❌ Претензия не помогла.<br><button class="btn btn-small btn-warning" onclick="debtSuit(${i})">⚖️ Иск в арбитраж (30 000₽)</button> <button class="btn btn-small btn-danger" onclick="debtWriteOff(${i})">Списать долг</button></div>`;
+      else if(d.stage===3) debtHtml=`<div class="debt-box">⚖️ Иск в арбитраже. Решение через ${d.daysLeft} дн.</div>`;
+    }
+    return `<div style="background:#f8f9fa;padding:15px;border-radius:8px;margin:10px 0">
+      <strong>${c.name}</strong> — ${fmt(c.amount)} ₽ ${c.consortium?'🤝 консорциум':''} ${c.insured?'🛡 застрахован':''}<br><small>${status}</small>
+      <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%">${c.progress}%</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>
+      ${debtHtml}
+    </div>`;
+  }).join('');
+}
+function insureContract(i){
+  const c=gameState.contracts[i]; const cost=Math.round(c.amount*0.03);
+  if(gameState.mainAccount<cost){ notify('error','Недостаточно средств','Нужно '+fmt(cost)+' ₽'); return; }
+  gameState.mainAccount-=cost; c.insured=true;
+  addTx('Страхование контракта '+c.name, -cost);
+  notify('success','Контракт застрахован','Банкротство заказчика не страшно');
+  updateAll(); updateContracts(); saveGame();
+}
+function subcontract(i){
+  const c=gameState.contracts[i]; const cost=Math.round(c.amount*0.2);
+  if(gameState.mainAccount<cost){ notify('error','Недостаточно средств','Нужно '+fmt(cost)+' ₽'); return; }
+  gameState.mainAccount-=cost; c.sub=true; c.progress=Math.min(100,c.progress+50);
+  addTx('Субподряд по '+c.name, -cost);
+  notify('success','Субподряд привлечён','+50% прогресса, −20% суммы');
+  if(c.progress>=100) completeContract(i);
+  updateAll(); updateContracts(); saveGame();
+}
+function workContract(i){
+  const c=gameState.contracts[i]; if(!c||c.done||c.failed)return;
+  if(gameState.nerves<10){ notify('error','Нервы на нуле','Отдохните'); return; }
+  const inc=gameState.owned.includes('car')?35:25;
+  c.progress=Math.min(100,c.progress+inc);
+  gameState.nerves-=10; sfx('click');
+  if(c.progress>=100){ completeContract(i); }
+  else notify('info','Работа идёт', c.progress+'% (дедлайн: день '+c.deadlineDay+')');
+  updateAll(); updateContracts(); saveGame();
+}
+function completeContract(i){
+  const c=gameState.contracts[i];
+  c.done=true;
+  let payment=c.amount;
+  if(c.cat && gameState.inventory[c.cat] && gameState.inventory[c.cat].length){
+    const lot=gameState.inventory[c.cat].shift();
+    const pnl=Math.round(lot.cost*(gameState.priceIndex[c.cat]/lot.index - 1));
+    payment+=pnl;
+    if(pnl>=0){ sfx('coin'); notify('success','Склад: лот использован','Доп. прибыль +'+fmt(pnl)+' ₽'); }
+    else { notify('warning','Склад: лот использован','Убыток по лоту '+fmt(pnl)+' ₽'); }
+    gameState.stats.traderPnl=(gameState.stats.traderPnl||0)+pnl;
+    if(gameState.stats.traderPnl>=100000) unlockAchievement('trader');
+  }
+  if(!c.insured && Math.random()<0.05){
+    c.done=false; c.failed=false;
+    c.debt={amount:payment, stage:0};
+    sfx('lose');
+    notify('error','⚠️ Заказчик обанкротился!','Оплата не поступила. Доступна претензия и арбитраж.');
+  } else {
+    gameState.mainAccount+=payment;
+    gameState.stats.contractsCompleted++;
+    gameState.stats.totalRevenue+=payment;
+    gameState.rp+=2; gameState.weekStats.contracts++;
+    addTx('Оплата по контракту '+c.name, payment);
+    unlockProgress('contractor', gameState.stats.contractsCompleted);
+    sfx('win');
+    notify('success','Контракт исполнен!','+'+fmt(payment)+' ₽, +2 RP');
+  }
+  if(gameState.employees.length){
+    const e=gameState.employees[Math.floor(Math.random()*gameState.employees.length)];
+    e.exp++;
+    const nl=Math.min(3,1+Math.floor(e.exp/2));
+    if(nl>e.level){ e.level=nl; notify('info','Сотрудник вырос', EMPLOYEES[e.pos].name+' → уровень '+nl); }
+  }
+  updateAll(); updateContracts(); saveGame();
+}
+function debtClaim(i){
+  const c=gameState.contracts[i]; if(!c||!c.debt||c.debt.stage!==0) return;
+  if(gameState.mainAccount<10000){ notify('error','Нужно 10 000 ₽',''); return; }
+  gameState.mainAccount-=10000; c.debt.stage=1; c.debt.daysLeft=3;
+  gameState.weekStats.fas++;
+  addTx('Претензия по долгу '+c.name, -10000);
+  notify('info','Претензия подана','Решение через 3 дня');
+  updateAll(); updateContracts(); saveGame();
+}
+function debtSuit(i){
+  const c=gameState.contracts[i]; if(!c||!c.debt||c.debt.stage!==2) return;
+  if(gameState.mainAccount<30000){ notify('error','Нужно 30 000 ₽',''); return; }
+  gameState.mainAccount-=30000; c.debt.stage=3; c.debt.daysLeft=5;
+  addTx('Иск в арбитраж '+c.name, -30000);
+  notify('info','Иск подан','Решение через 5 дней');
+  updateAll(); updateContracts(); saveGame();
+}
+function debtWriteOff(i){
+  const c=gameState.contracts[i]; if(!c||!c.debt) return;
+  c.debt=null; c.failed=true;
+  gameState.reputation.customers=Math.max(0,gameState.reputation.customers-5);
+  notify('warning','Долг списан','Репутация −5');
+  updateAll(); updateContracts(); saveGame();
+}
+function resolveDebt(c){
+  const lawyer=(hasEmp('lawyer')&&gameState.morale>=50? 0.2*empMult('lawyer'):0)+(gameState.techs.legal?0.15:0);
+  if(c.debt.stage===1){
+    if(Math.random() < (0.5 + lawyer)){
+      gameState.mainAccount+=c.debt.amount;
+      gameState.stats.totalRevenue+=c.debt.amount;
+      addTx('Оплата по претензии '+c.name, c.debt.amount);
+      sfx('coin'); notify('success','Претензия сработала!','+'+fmt(c.debt.amount)+' ₽');
+      c.debt=null; c.done=true;
+      gameState.stats.contractsCompleted++;
+      unlockProgress('contractor', gameState.stats.contractsCompleted);
+    } else { c.debt.stage=2; notify('warning','Претензия отклонена','Доступен иск в арбитраж'); }
+  } else if(c.debt.stage===3){
+    if(Math.random() < (0.5 + lawyer)){
+      const sum=Math.round(c.debt.amount*1.1);
+      gameState.mainAccount+=sum;
+      gameState.stats.totalRevenue+=sum;
+      addTx('Арбитраж выигран '+c.name, sum);
+      sfx('win'); notify('success','⚖️ Арбитраж выигран!','+'+fmt(sum)+' ₽ (с неустойкой), +1 RP');
+      gameState.rp+=1;
+      unlockAchievement('arbiter');
+      c.debt=null; c.done=true;
+      gameState.stats.contractsCompleted++;
+      unlockProgress('contractor', gameState.stats.contractsCompleted);
+    } else {
+      c.debt=null; c.failed=true;
+      gameState.reputation.customers=Math.max(0,gameState.reputation.customers-5);
+      sfx('lose'); notify('error','Арбитраж проигран','Долг списан, репутация −5');
+    }
+  }
+}
+
+// ========== ИНСПЕКТОР: 2 смены/сезон, вход 5000₽ ==========
+function inspectorAreaRender(){
+  const si=Math.floor((gameState.day-1)/30);
+  if(gameState.inspectorSeason!==si){ gameState.inspectorSeason=si; gameState.inspectorUses=0; gameState.inspectorPhase='idle'; }
+  if(gameState.inspectorPhase==='docs') return;
+  const uses=gameState.inspectorUses||0;
+  let html='';
+  if(uses===0) html=`<p>Смен доступно: 2. Вход: 5 000 ₽.</p><button class="btn btn-secondary" onclick="inspectorShift()">🕵️ Начать смену (5 000₽)</button>`;
+  else if(uses===1) html=`<p>Использована 1 смена. Результат: ${gameState.inspectorLastResult||'—'}</p><button class="btn btn-secondary" onclick="inspectorShift()">🕵️ Вторая смена (5 000₽)</button>`;
+  else html=`<p>Лимит сезона исчерпан (2 смены). Результат: ${gameState.inspectorLastResult||'—'}. Возвращайтесь в следующем сезоне.</p>`;
+  setH('inspectorArea', html);
+}
+function inspectorShift(){
+  const si=Math.floor((gameState.day-1)/30);
+  if(gameState.inspectorSeason!==si){ gameState.inspectorSeason=si; gameState.inspectorUses=0; gameState.inspectorPhase='idle'; }
+  if((gameState.inspectorUses||0)>=2){ notify('warning','Лимит сезона','2 смены уже использованы'); return; }
+  if(gameState.inspectorPhase==='docs'){ notify('warning','Смена уже идёт','Завершите проверку'); return; }
+  if(gameState.mainAccount<5000){ notify('error','Нужно 5 000 ₽','Вход на смену платный'); return; }
+  gameState.mainAccount-=5000;
+  gameState.inspectorUses=(gameState.inspectorUses||0)+1;
+  gameState.inspectorPhase='docs';
+  addTx('Вход на смену инспектора', -5000);
+  const docs=[{n:'Заявка подписана руководителем', v:0},{n:'Отсутствует подпись на стр. 3', v:1},{n:'Выписка ЕГРЮЛ действительна', v:0},{n:'Справка ФНС просрочена', v:1},{n:'Лицензия действительна', v:0}];
+  const sh=docs.sort(()=>Math.random()-0.5);
+  setH('inspectorArea', `<p>Смена ${gameState.inspectorUses}/2. Найдите 2 нарушения в заявке:</p>`+ sh.map(d=>`<div class="doc-item" data-v="${d.v}" onclick="this.classList.toggle('selected'); sfx('click')">${d.n}</div>`).join('')+`<button class="btn" onclick="checkInspector()">✅ Проверить</button>`);
+  updateAll(); saveGame();
+}
+function checkInspector(){
+  const sel=[...document.querySelectorAll('#inspectorArea .doc-item.selected')];
+  const okSel=sel.filter(e=>e.dataset.v==='1').length;
+  const badSel=sel.filter(e=>e.dataset.v==='0').length;
+  if(okSel===2 && badSel===0){
+    gameState.mainAccount+=15000;
+    gameState.reputation.fas=Math.min(100,gameState.reputation.fas+10);
+    gameState.rp+=1;
+    addTx('Смена инспектора: награда', 15000);
+    sfx('win'); notify('success','🕵️ Смена пройдена','+15 000 ₽, ФАС +10, +1 RP');
+    unlockAchievement('inspector');
+    gameState.inspectorLastResult='пройдена';
+  } else {
+    gameState.reputation.fas=Math.max(0,gameState.reputation.fas-5);
+    sfx('lose'); notify('error','Ошибка проверки','ФАС −5.');
+    gameState.inspectorLastResult='провалена';
+  }
+  gameState.inspectorPhase = (gameState.inspectorUses>=2)? 'used2' : 'used1';
+  inspectorAreaRender();
+  updateAll(); saveGame();
+}
+
+// ========== ДИЛЕММЫ ==========
+function triggerDilemma(){
+  const d=DILEMMAS[Math.floor(Math.random()*DILEMMAS.length)];
+  setH('ethicalContent', `<div class="event-card"><div class="event-title">${d.q}</div><div style="display:flex;flex-direction:column;gap:10px">${d.opts.map(o=>`<button class="btn" onclick="resolveDilemma('${o[1]}')">${o[0]}</button>`).join('')}</div></div>`);
+  $('ethicalModal').classList.add('active');
+}
+function resolveDilemma(key){
+  closeModal('ethicalModal');
+  const S=gameState;
+  const honest = (key==='bribe_refuse'||key==='cartel_refuse');
+  if(key==='bribe_take'){
+    if(Math.random()<0.3){ S.rnpDays=Math.max(S.rnpDays,730); S.mainAccount-=500000; addTx('Штраф за откат',-500000); sfx('lose'); notify('error','🚨 Попались!','РНП 2 года, штраф 500 000 ₽'); }
+    else { const sum=Math.round(100000+Math.random()*200000); S.mainAccount+=sum; addTx('Откат',sum); notify('warning','Откат взят','+'+fmt(sum)+' ₽, но совесть нечиста'); }
+  }
+  else if(key==='bribe_refuse'){ S.reputation.customers=Math.min(100,S.reputation.customers+10); notify('success','Отказ от отката','Репутация у заказчиков +10'); }
+  else if(key==='bribe_report'){ S.reputation.fas=Math.min(100,S.reputation.fas+15); S.rp+=1; notify('success','Сообщили в ФАС','ФАС +15, +1 RP'); }
+  else if(key==='cartel_take'){
+    if(Math.random()<0.4){ S.rnpDays=Math.max(S.rnpDays,365); sfx('lose'); notify('error','🚨 ФАС вскрыла картель!','РНП 1 год'); }
+    else { S.mainAccount+=200000; addTx('Картель',200000); notify('warning','Картель работает','+200 000 ₽, но это незаконно'); }
+  }
+  else if(key==='cartel_refuse'){ S.reputation.customers=Math.min(100,S.reputation.customers+5); notify('success','Отказ от картеля','Репутация +5'); }
+  else if(key==='press_truth'){ S.reputation.fas=Math.min(100,S.reputation.fas+10); S.reputation.customers=Math.max(0,S.reputation.customers-5); notify('info','Правда сказана','ФАС +10, заказчики −5'); }
+  else if(key==='press_silent'){ notify('info','Промолчали','Ничего не изменилось'); }
+  else if(key==='press_lie'){
+    if(Math.random()<0.5){ S.reputation.fas=Math.max(0,S.reputation.fas-15); S.reputation.customers=Math.max(0,S.reputation.customers-10); sfx('lose'); notify('error','Клевета раскрыта','ФАС −15, заказчики −10'); }
+    else { S.rating+=10; notify('warning','Клевета сработала','+10 рейтинга, но карма страдает'); }
+  }
+  if(honest){ S.honestCount=(S.honestCount||0)+1; unlockProgress('honest3', S.honestCount); }
+  updateAll(); saveGame();
+}
+
+// ========== СОВЕТ ДИРЕКТОРОВ: каждые 15 дней ==========
+function maybeBoard(){
+  if(gameState.day % 15 === 0 && gameState.lastBoardDay !== gameState.day){
+    gameState.lastBoardDay = gameState.day;
+    openBoard();
+  }
+}
+function openBoard(){
+  setH('boardContent', `
+    <p>Совет директоров: выберите стратегию на следующие 15 дней:</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-danger" onclick="setStrategy('aggression')">⚔️ Агрессия: демпинг без правил, пол цены 45% (вместо 50%), −5 репутации у заказчиков</button>
+      <button class="btn" onclick="setStrategy('quality')">⭐ Качество: +2 рейтинга за победу, −5 сек мини-игры</button>
+      <button class="btn btn-warning" onclick="setStrategy('economy')">💰 Экономия: зарплаты −20%, −10 морали</button>
+    </div>`);
+  $('boardModal').classList.add('active');
+}
+function setStrategy(s){
+  gameState.strategy=s; gameState.strategyUntil=gameState.day+15;
+  if(s==='aggression'){ gameState.reputation.customers=Math.max(0,gameState.reputation.customers-5); }
+  if(s==='economy'){ gameState.morale=Math.max(0,gameState.morale-10); }
+  closeModal('boardModal');
+  notify('info','Стратегия выбрана', ({aggression:'⚔️ Агрессия',quality:'⭐ Качество',economy:'💰 Экономия'})[s]+' до дня '+gameState.strategyUntil);
+  updateAll(); saveGame();
+}
+
+function updateBank(){
+  setT('bankMainAccount', fmt(gameState.mainAccount)+' ₽');
+  setT('bankSpecialAccount', fmt(gameState.specialAccount)+' ₽');
+  setT('bankBlockedAmount', fmt(gameState.blockedSecurities)+' ₽');
+  setT('bankCreditsAmount', fmt(gameState.credits)+' ₽');
+  setT('bankCreditLimit', fmt(gameState.creditLimit-gameState.credits)+' ₽');
+  setH('activeSecurities', gameState.activeSecurities.length? gameState.activeSecurities.map(s=>`<div style="padding:10px;border:1px solid #ddd;border-radius:5px;margin:5px 0"><strong>${s.tenderName}</strong> — ${fmt(s.amount)} ₽ (${s.date})</div>`).join('') : '<p style="color:#666">Нет</p>');
+  setH('depositsList', gameState.deposits.length? gameState.deposits.map((d,i)=>{
+    const left=d.openDay+d.term-gameState.day;
+    return `<div style="padding:10px;border:1px solid #ddd;border-radius:5px;margin:5px 0"><strong>${fmt(d.amount)} ₽</strong> — ${(d.rate*100)}% годовых, осталось ${left} дн.<br><button class="btn btn-small btn-danger" onclick="closeDepositEarly(${i})">Забрать досрочно (без %)</button></div>`;
+  }).join('') : '<p style="color:#666">Нет вкладов</p>');
+}
+function withdrawFromSpecial(){
+  const a=parseInt($('transferAmount')?.value);
+  if(!a||a<=0){notify('error','Ошибка','Введите сумму');return;}
+  const free=gameState.specialAccount-gameState.blockedSecurities;
+  if(a>free){notify('error','Недостаточно свободных средств','Доступно к выводу: '+fmt(free)+' ₽ (обеспечение заблокировано)');return;}
+  gameState.specialAccount-=a; gameState.mainAccount+=a;
+  addTx('Вывод со спецсчёта', a); sfx('coin');
+  notify('success','Вывод выполнен', fmt(a)+' ₽');
+  updateAll(); updateBank(); saveGame();
+}
+function transferToSpecial(){
+  const a=parseInt($('transferAmount')?.value);
+  if(!a||a<=0){notify('error','Ошибка','Введите сумму');return;}
+  if(gameState.mainAccount<a){notify('error','Недостаточно средств','');return;}
+  gameState.mainAccount-=a; gameState.specialAccount+=a;
+  addTx('Перевод на спецсчёт', -a); sfx('coin');
+  notify('success','Перевод выполнен', fmt(a)+' ₽');
+  updateAll(); updateBank(); saveGame();
+}
+function takeCredit(){
+  const a=parseInt($('creditAmount')?.value), term=parseInt($('creditTerm')?.value);
+  if(!a||a<=0){notify('error','Ошибка','Введите сумму');return;}
+  if(gameState.credits+a>gameState.creditLimit){notify('error','Лимит','');return;}
+  const rates={3:.15,6:.18,12:.22};
+  const total=a*(1+rates[term]*term/12);
+  if(confirm(`Кредит ${fmt(a)} ₽ на ${term} мес.\nК возврату: ${fmt(total)} ₽`)){
+    gameState.credits+=a; gameState.mainAccount+=a;
+    addTx('Кредит', a); sfx('coin');
+    notify('success','Кредит одобрен','+'+fmt(a)+' ₽');
+    updateAll(); updateBank(); saveGame();
+  }
+}
+function openDeposit(){
+  const a=parseInt($('depositAmount')?.value), term=parseInt($('depositTerm')?.value);
+  if(!a||a<10000){notify('error','Минимум 10 000 ₽','');return;}
+  if(gameState.mainAccount<a){notify('error','Недостаточно средств','');return;}
+  const rates={90:0.08,180:0.10,360:0.12};
+  gameState.mainAccount-=a;
+  gameState.deposits.push({amount:a, term, rate:rates[term], openDay:gameState.day});
+  gameState.stats.depositsOpened=(gameState.stats.depositsOpened||0)+1;
+  unlockProgress('depositor', gameState.stats.depositsOpened);
+  addTx('Вклад открыт '+term+'д', -a);
+  notify('success','Вклад открыт', fmt(a)+' ₽ под '+(rates[term]*100)+'% годовых');
+  updateAll(); updateBank(); saveGame();
+}
+function closeDepositEarly(i){
+  const d=gameState.deposits[i]; if(!d)return;
+  gameState.mainAccount+=d.amount; gameState.deposits.splice(i,1);
+  addTx('Вклад досрочно', d.amount);
+  notify('warning','Досрочное снятие','Проценты потеряны');
+  updateAll(); updateBank(); saveGame();
+}
+
+function updateCompany(){
+  const o=OFFICES[gameState.officeLevel];
+  setT('officeIcon',o.icon); setT('officeName',o.name); setT('officeDesc','Уровень '+(gameState.officeLevel+1));
+  const next=OFFICES[gameState.officeLevel+1];
+  setT('officeUpgradeCost', next? fmt(next.cost):'MAX');
+  setT('rpDisplay', gameState.rp);
+  setT('prestigeDisplay', gameState.prestigeCount||0);
+  setH('researchList', Object.keys(TECHS).map(k=>{
+    const t=TECHS[k], owned=!!gameState.techs[k];
+    return `<div class="tech-card ${owned?'owned':''}"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><strong>${t.name}</strong> (${t.cost} RP)<br><small>${t.desc}</small></div>${owned?'<span style="color:#4CAF50;font-weight:bold">✅ Изучено</span>':`<button class="btn btn-small" onclick="buyTech('${k}')">Изучить</button>`}</div></div>`;
+  }).join(''));
+  setH('purchasesList', Object.keys(PURCHASES).map(k=>{
+    const p=PURCHASES[k], owned=gameState.owned.includes(k);
+    return `<div class="employee-card"><div><strong>${p.icon} ${p.name}</strong><br><small>${p.effect}</small></div>${owned?'<span style="color:#4CAF50;font-weight:bold">✅ Есть</span>':`<button class="btn btn-small" onclick="buyPurchase('${k}')">Купить ${fmt(p.cost)}₽</button>`}</div>`;
+  }).join(''));
+  setH('employeesList', gameState.employees.length? gameState.employees.map((e,i)=>`<div class="employee-card"><div><strong>${EMPLOYEES[e.pos].name}</strong> ${'⭐'.repeat(e.level)}<br><small>${fmt(EMPLOYEES[e.pos].salary)}₽/мес | ${EMPLOYEES[e.pos].bonus} | опыт ${e.exp}</small></div><div style="display:flex;gap:6px"><button class="btn btn-small btn-secondary" onclick="trainEmployee(${i})">🎓 Тренинг 30к</button><button class="btn btn-danger btn-small" onclick="fireEmployee(${i})">Уволить</button></div></div>`).join('') : '<p style="color:#666">Нет сотрудников</p>');
+  setH('certificationsList', gameState.certifications.length? gameState.certifications.map(c=>`<div style="padding:8px;background:#e8f5e9;border-radius:5px;margin:5px 0">✅ ${CERTS[c]||c}</div>`).join('') : '<p style="color:#666">Нет</p>');
+}
+function trainEmployee(i){
+  const e=gameState.employees[i]; if(!e) return;
+  if(e.level>=3){ notify('warning','Максимальный уровень',''); return; }
+  if(gameState.mainAccount<30000){ notify('error','Нужно 30 000 ₽',''); return; }
+  gameState.mainAccount-=30000; e.exp+=2; e.level=Math.min(3, 1+Math.floor(e.exp/2));
+  addTx('Тренинг: '+EMPLOYEES[e.pos].name, -30000);
+  sfx('coin'); notify('success','Тренинг завершён', EMPLOYEES[e.pos].name+' → уровень '+e.level);
+  updateAll(); updateCompany(); saveGame();
+}
+function buyTech(k){
+  const t=TECHS[k];
+  if(gameState.techs[k]) return;
+  if(gameState.rp<t.cost){ notify('warning','Мало RP','Нужно '+t.cost+' RP'); return; }
+  gameState.rp-=t.cost; gameState.techs[k]=true;
+  sfx('win'); notify('success','Исследование завершено', t.name+': '+t.desc);
+  updateAll(); updateCompany(); saveGame();
+}
+function prestige(){
+  if(stageIndex()<4){ notify('warning','Недоступно','Нужна стадия «Холдинг»'); return; }
+  if(!confirm('Начать «Новое дело+»? Забег сбросится. Навсегда: +10% маржа, ×2 старт-капитал, +1 RP.')) return;
+  gameState.prestigeCount=(gameState.prestigeCount||0)+1;
+  gameState.rp+=1;
+  unlockAchievement('prestige1');
+  const keep={achievements:gameState.achievements, profile:gameState.profile, cases:gameState.cases, prestigeCount:gameState.prestigeCount, rp:gameState.rp, techs:gameState.techs, soundOn:gameState.soundOn, streak:gameState.streak, lastLogin:gameState.lastLogin, dailyClaim:gameState.dailyClaim, honestCount:gameState.honestCount, achProgress:gameState.achProgress};
+  const mode=gameState.mode;
+  Object.assign(gameState, defaultState());
+  Object.assign(gameState, keep);
+  gameState.mode=mode;
+  applyModeStart(mode);
+  generateDayTenders(); generateNews(); genChallenges(true);
+  saveGame();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('gameScreen').classList.add('active');
+  renderTenderTable(); refreshStage(); updateAll();
+  sfx('win'); notify('success','✨ Новое дело+ '+gameState.prestigeCount,'Постоянные бонусы активны');
+}
+function buyPurchase(key){
+  const p=PURCHASES[key];
+  if(gameState.owned.includes(key)){notify('warning','Уже куплено','');return;}
+  if(gameState.mainAccount<p.cost){notify('error','Нужно '+fmt(p.cost)+' ₽','');return;}
+  gameState.mainAccount-=p.cost; gameState.owned.push(key);
+  addTx('Покупка: '+p.name, -p.cost);
+  unlockProgress('comfort', gameState.owned.length);
+  sfx('coin'); notify('success','Куплено', p.name+': '+p.effect);
+  updateAll(); updateCompany(); saveGame();
+}
+function upgradeOffice(){
+  const next=OFFICES[gameState.officeLevel+1];
+  if(!next){notify('info','Максимум','');return;}
+  if(gameState.mainAccount<next.cost){notify('error','Недостаточно средств','Нужно '+fmt(next.cost)+' ₽');return;}
+  gameState.mainAccount-=next.cost; gameState.officeLevel++;
+  addTx('Офис: '+next.name, -next.cost);
+  notify('success','Офис улучшен', next.name);
+  updateAll(); updateCompany(); saveGame();
+}
+function hireEmployee(){
+  const p=$('hirePosition')?.value;
+  if(hasEmp(p)){notify('warning','Уже нанят','');return;}
+  if(gameState.mainAccount<EMPLOYEES[p].salary){notify('error','Не хватает денег','');return;}
+  gameState.employees.push({pos:p, level:1, exp:0});
+  gameState.lastSalaryDay=gameState.day;
+  gameState.mainAccount-=EMPLOYEES[p].salary;
+  addTx('Наём: '+EMPLOYEES[p].name, -EMPLOYEES[p].salary);
+  unlockProgress('employer', gameState.employees.length);
+  notify('success','Нанят', EMPLOYEES[p].name);
+  updateAll(); updateCompany(); saveGame();
+}
+function fireEmployee(i){ gameState.employees.splice(i,1); notify('info','Уволен',''); updateAll(); updateCompany(); saveGame(); }
+function getCertification(){
+  const c=$('certType')?.value;
+  if(gameState.certifications.includes(c)){notify('warning','Уже есть','');return;}
+  if(gameState.mainAccount<CERT_COSTS[c]){notify('error','Недостаточно средств','');return;}
+  gameState.mainAccount-=CERT_COSTS[c]; gameState.certifications.push(c);
+  addTx('Сертификат: '+CERTS[c], -CERT_COSTS[c]);
+  unlockProgress('certified', gameState.certifications.length);
+  notify('success','Получено', CERTS[c]);
+  updateAll(); updateCompany(); saveGame();
+}
+
+function updateLife(){
+  setT('lifeNerves', gameState.nerves);
+  setT('moraleDisplay', gameState.morale);
+  setT('moraleDisplay2', gameState.morale);
+  setT('coffeeCost', gameState.owned.includes('coffee_machine')?0:200);
+  const today=new Date().toDateString();
+  const claimed = gameState.dailyClaim===today;
+  setT('dailyBtn', claimed? '🎁 Дейли получено (стрик '+(gameState.streak||0)+')' : '🎁 Дейли (стрик '+(gameState.streak||0)+') — забрать!');
+  const btn=$('dailyBtn'); if(btn) btn.disabled=claimed;
+  setH('challengesList', (gameState.challenges||[]).map((ch,i)=>{
+    const cur=CH_GET[ch.id]? CH_GET[ch.id]():0;
+    const done=cur>=ch.target;
+    return `<div class="challenge-card ${done?'done':''}"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><strong>${ch.text}</strong><br><small>Прогресс: ${cur}/${ch.target} | награда 25 000 ₽ + 1 RP</small></div>${ch.claimed?'<span style="color:#4CAF50;font-weight:bold">✅ Получено</span>':(done?`<button class="btn btn-small" onclick="claimChallenge(${i})">Забрать</button>`:'')}</div></div>`;
+  }).join('') || '<p style="color:#666">Нет челленджей</p>');
+}
+function dailyClaim(){
+  const today=new Date().toDateString();
+  if(gameState.dailyClaim===today){ notify('warning','Уже получено','Возвращайтесь завтра'); return; }
+  const y=new Date(Date.now()-86400000).toDateString();
+  gameState.streak = (gameState.lastLogin===y)? (gameState.streak||0)+1 : 1;
+  gameState.lastLogin=today; gameState.dailyClaim=today;
+  const table=[5000,10000,15000,20000,25000,30000,50000];
+  const reward=table[(gameState.streak-1)%7];
+  gameState.mainAccount+=reward;
+  addTx('Дейли-награда (стрик '+gameState.streak+')', reward);
+  if(gameState.streak>=7) unlockAchievement('streak7');
+  sfx('win'); notify('success','🎁 Дейли-награда','+'+fmt(reward)+' ₽ (стрик '+gameState.streak+')');
+  updateAll(); updateLife(); saveGame();
+}
+function claimChallenge(i){
+  const ch=gameState.challenges[i]; if(!ch||ch.claimed) return;
+  const cur=CH_GET[ch.id]? CH_GET[ch.id]():0;
+  if(cur<ch.target){ notify('warning','Не выполнено',''); return; }
+  ch.claimed=true; gameState.mainAccount+=25000; gameState.rp+=1;
+  addTx('Челлендж: '+ch.text, 25000);
+  sfx('win'); notify('success','Челлендж выполнен','+25 000 ₽, +1 RP');
+  updateAll(); updateLife(); saveGame();
+}
+function restAction(){ if(gameState.daily.rest>=1){notify('warning','Уже отдыхали сегодня','');return;} gameState.daily.rest=1; gameState.nerves=Math.min(100,gameState.nerves+20); notify('success','Отдых','+20 нервов'); updateAll(); updateLife(); saveGame(); }
+function drinkCoffee(){ if(gameState.daily.coffee>=3){notify('warning','Лимит кофе (3/день)','');return;} const cost=gameState.owned.includes('coffee_machine')?0:200; if(gameState.mainAccount<cost){notify('error','Нет средств','');return;} gameState.mainAccount-=cost; gameState.daily.coffee++; gameState.nerves=Math.min(100,gameState.nerves+10); notify('success','Кофе','+10 нервов'); updateAll(); updateLife(); saveGame(); }
+function massageAction(){ if(gameState.daily.massage>=1){notify('warning','Один раз в день','');return;} if(gameState.mainAccount<2500){notify('error','Нужно 2500 ₽','');return;} gameState.mainAccount-=2500; gameState.daily.massage=1; gameState.nerves=Math.min(100,gameState.nerves+25); addTx('Массаж', -2500); notify('success','Массаж','+25 нервов'); updateAll(); updateLife(); saveGame(); }
+function vacationAction(){ if(gameState.mainAccount<50000){notify('error','Нужно 50 000 ₽','');return;} gameState.mainAccount-=50000; addTx('Отпуск', -50000); for(let k=0;k<7;k++) endDay(true); gameState.nerves=100; gameState.morale=Math.min(100,gameState.morale+20); notify('success','Отпуск отгулян','+7 дней, нервы 100%'); refreshStage(); updateAll(); updateLife(); saveGame(); }
+function teamCoffee(){ if(gameState.daily.teamCoffee>=2){notify('warning','Максимум 2 в день','');return;} const cost=gameState.owned.includes('coffee_machine')?0:500; if(gameState.mainAccount<cost){notify('error','Нет средств','');return;} gameState.mainAccount-=cost; gameState.daily.teamCoffee++; gameState.morale=Math.min(100,gameState.morale+10); notify('success','Кофе команде','+10 морали'); updateAll(); updateLife(); saveGame(); }
+function corporateDay(){ if(!gameState.employees.length){notify('warning','Нет сотрудников','');return;} if(gameState.daily.corp>=1){notify('warning','Один раз в день','');return;} const cost=2000*gameState.employees.length; if(gameState.mainAccount<cost){notify('error','Нужно '+fmt(cost)+' ₽','');return;} gameState.mainAccount-=cost; gameState.daily.corp=1; gameState.morale=Math.min(100,gameState.morale+30); addTx('Корпоратив', -cost); notify('success','Корпоратив','+30 морали'); updateAll(); updateLife(); saveGame(); }
+function dayOff(){ endDay(); gameState.morale=Math.min(100,gameState.morale+40); notify('success','Выходной','+40 морали'); updateLife(); saveGame(); }
+
+function updateAccounting(){
+  const names={usn6:'УСН 6%',usn15:'УСН 15%',osno:'ОСНО 20%'};
+  setT('taxSystem', names[gameState.taxSystem]);
+  setT('vatDue', fmt(gameState.vatDue)+' ₽'); setT('profitTax', fmt(gameState.profitTax)+' ₽'); setT('insuranceDue', fmt(gameState.insuranceDue)+' ₽');
+  setH('transactionsList', gameState.transactions.length? gameState.transactions.slice(-25).reverse().map(t=>`<div style="padding:8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between"><span>${t.desc}</span><span style="color:${t.amount>0?'#4CAF50':'#f44336'};font-weight:bold">${t.amount>0?'+':''}${fmt(t.amount)} ₽</span></div>`).join('') : '<p style="color:#666">Нет</p>');
+}
+function payTaxes(){
+  const total=gameState.vatDue+gameState.profitTax+gameState.insuranceDue;
+  if(total<=0){notify('info','Нечего платить','');return;}
+  if(gameState.mainAccount<total){notify('error','Недостаточно средств','');return;}
+  gameState.mainAccount-=total; gameState.stats.taxesPaid+=total;
+  gameState.vatDue=gameState.profitTax=gameState.insuranceDue=0;
+  addTx('Налоги', -total); notify('success','Налоги уплачены', fmt(total)+' ₽');
+  updateAll(); updateAccounting(); saveGame();
+}
+function changeTaxSystem(){ const s=['usn6','usn15','osno']; gameState.taxSystem=s[(s.indexOf(gameState.taxSystem)+1)%3]; const names={usn6:'УСН 6%',usn15:'УСН 15%',osno:'ОСНО 20%'}; notify('info','Система изменена', names[gameState.taxSystem]); updateAccounting(); saveGame(); }
+function addTx(desc, amount){ gameState.transactions.push({desc, amount, day:gameState.day}); if(gameState.transactions.length>100)gameState.transactions.shift(); }
+function updateFas(){
+  const sel=$('fasTender');
+  if(sel){ sel.innerHTML='<option value="">Выберите</option>'+gameState.dayTenders.filter(t=>t.status==='active').map(t=>`<option value="${t.id}">${t.number}</option>`).join(''); }
+  setH('fasCasesList', gameState.fasCases.length? gameState.fasCases.map(c=>`<div style="padding:10px;border-left:4px solid ${c.status==='won'?'#4CAF50':c.status==='lost'?'#f44336':'#3498db'};background:#f8f9fa;border-radius:5px;margin:8px 0"><strong>${c.tenderName}</strong><br>${c.reason} — ${c.status==='pending'?'⏳ до дня '+c.resolvedDay: c.status==='won'?'✅ Выиграна':'❌ Отклонена'}</div>`).join('') : '<p style="color:#666">Нет жалоб</p>');
+  renderInspectorAreaSafe();
+}
+function renderInspectorAreaSafe(){ if(typeof inspectorAreaRender==='function') inspectorAreaRender(); }
+function fileFasComplaint(){
+  const id=parseInt($('fasTender')?.value), reason=$('fasReason')?.value;
+  if(!id){notify('error','Ошибка','Выберите тендер');return;}
+  if(gameState.mainAccount<5000){notify('error','Нужно 5000₽','');return;}
+  gameState.mainAccount-=5000;
+  const t=gameState.dayTenders.find(x=>x.id===id);
+  const reasons={rigged:'Заточка ТЗ',unfair:'Необоснованное отклонение',cancel:'Незаконная отмена',corruption:'Коррупция'};
+  gameState.fasCases.push({tenderName:t?t.name:'—', reason:reasons[reason], filedDay:gameState.day, resolvedDay:gameState.day+10, status:'pending'});
+  gameState.weekStats.fas++;
+  addTx('Жалоба ФАС', -5000);
+  notify('info','Жалоба подана','Рассмотрение на день '+(gameState.day+10));
+  updateAll(); updateFas(); saveGame();
+}
+function resolveFas(){
+  const legalBonus=(gameState.techs.legal?0.15:0);
+  gameState.fasCases.forEach(c=>{
+    if(c.status==='pending' && gameState.day>=c.resolvedDay){
+      let chance=0.5 + (hasEmp('lawyer')&&gameState.morale>=50? 0.2*empMult('lawyer'):0) + ((c.reason==='Заточка ТЗ'||c.reason==='Коррупция')?0.15:0) + legalBonus;
+      c.status = Math.random()<chance ? 'won':'lost';
+      if(c.status==='won'){ gameState.stats.complaintsWon++; gameState.rating+=10; gameState.rp+=1; unlockProgress('fas_fighter', gameState.stats.complaintsWon); notify('success','Жалоба выиграна!','+1 RP'); }
+      else { gameState.reputation.fas-=5; notify('error','Жалоба отклонена',''); }
+    }
+  });
+}
+function generateNews(){
+  const pool=[
+    {t:'Министерство урезало бюджет на 30%',k:'urgent'},
+    {t:'ФАС ужесточает контроль за заточками',k:'urgent'},
+    {t:'Рост закупок в IT-секторе',k:'good'},
+    {t:'Новая площадка снизила комиссии',k:'good'},
+    {t:'Инфляция: НМЦК вырастут',k:'urgent'},
+    {t:'Реестр недобросовестных поставщиков пополняется',k:'urgent'}
+  ];
+  const n=pool[Math.floor(Math.random()*pool.length)];
+  gameState.news.unshift({text:n.t, type:n.k, day:gameState.day});
+  if(gameState.news.length>15) gameState.news.pop();
+}
+function updateNews(){ setH('newsFeed', gameState.news.length? gameState.news.map(n=>`<div class="news-item ${n.type}"><small>День ${n.day}</small><br>${n.text}</div>`).join('') : '<p style="color:#666">Нет</p>'); }
+function updateCalendar(){
+  const contractOffsets=gameState.contracts.filter(c=>!c.done&&!c.failed).map(c=>c.deadlineDay-gameState.day);
+  let html='<div class="calendar">';
+  for(let i=0;i<28;i++){
+    const d=gameState.day+i;
+    const dl=gameState.dayTenders.some(t=>t.daysLeft===i&&t.status==='active');
+    const cl=contractOffsets.includes(i);
+    html+=`<div class="calendar-day ${i===0?'today':''} ${cl?'contract':(dl?'deadline':'')}">${d}${cl?'📄':(dl?'⚠️':'')}</div>`;
+  }
+  html+='</div><p style="margin-top:10px;font-size:.85em;color:#666">🔴 дедлайн тендера, 🟣 () срок контракта | Модификатор сезона: '+SEASON_MODS[gameState.seasonMod||'none']+'</p>';
+  setH('calendarView', html);
+}
+function updateStats(){
+  const s=gameState.stats;
+  const wr=(s.tendersWon+s.tendersLost)>0? Math.round(s.tendersWon/(s.tendersWon+s.tendersLost)*100):0;
+  setH('statsGrid', `
+    <div class="stat-item"><div class="stat-label">Побед</div><div class="stat-value">${s.tendersWon}</div></div>
+    <div class="stat-item"><div class="stat-label">Поражений</div><div class="stat-value">${s.tendersLost}</div></div>
+    <div class="stat-item"><div class="stat-label">Win rate</div><div class="stat-value">${wr}%</div></div>
+    <div class="stat-item"><div class="stat-label">Контрактов</div><div class="stat-value">${s.contractsCompleted}</div></div>
+    <div class="stat-item"><div class="stat-label">Выручка</div><div class="stat-value">${fmt(s.totalRevenue)} ₽</div></div>
+    <div class="stat-item"><div class="stat-label">PnL склада</div><div class="stat-value">${fmt(s.traderPnl||0)} ₽</div></div>
+    <div class="stat-item"><div class="stat-label">RP</div><div class="stat-value">${gameState.rp}</div></div>
+    <div class="stat-item"><div class="stat-label">Престиж</div><div class="stat-value">${gameState.prestigeCount||0}</div></div>`);
+  const cats=Object.keys(CAT_BASE);
+  setH('marketShare', cats.map(c=>{ const sh=share(c); return `<div class="stat-item"><div class="stat-label">${CAT_NAMES[c]}${sh>40?' ⚔️ война':''}</div><div class="stat-value">${sh}%</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${sh}%"></div></div></div>`; }).join(''));
+  setH('casesList', (gameState.cases||[]).slice(0,15).map(c=>`<div style="padding:8px;border-left:4px solid ${c.result==='win'?'#4CAF50':'#f44336'};background:#f8f9fa;border-radius:5px;margin:6px 0"><small>День ${c.day}</small> — ${c.name} — <strong>${c.result==='win'?'ПОБЕДА':'проигрыш'}</strong> (${fmt(c.sum)} ₽)</div>`).join('') || '<p style="color:#666">Пусто</p>');
+  setH('repBars', `
+    <div class="stat-item"><div class="stat-label">Заказчики</div><div class="stat-value">${Math.floor(gameState.reputation.customers)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${gameState.reputation.customers}%"></div></div></div>
+    <div class="stat-item"><div class="stat-label">ФАС</div><div class="stat-value">${Math.floor(gameState.reputation.fas)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${gameState.reputation.fas}%"></div></div></div>
+    <div class="stat-item"><div class="stat-label">Банки</div><div class="stat-value">${Math.floor(gameState.reputation.banks)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${gameState.reputation.banks}%"></div></div></div>`);
+}
+function unlockAchievement(id){ if(gameState.achievements[id])return; gameState.achievements[id]=true; const a=ACHIEVEMENTS.find(x=>x.id===id); if(a) notify('success','🏆 '+a.name, a.desc); saveGame(); }
+function unlockProgress(id, val){
+  const a=ACHIEVEMENTS.find(x=>x.id===id); if(!a||gameState.achievements[id])return;
+  gameState.achProgress=gameState.achProgress||{};
+  gameState.achProgress[id]=Math.max(gameState.achProgress[id]||0, val);
+  if(gameState.achProgress[id]>=a.target) unlockAchievement(id);
+}
+function renderAchievements(containerId){
+  setH(containerId, ACHIEVEMENTS.map(a=>{ const un=gameState.achievements[a.id]; return `<div class="achievement-card ${un?'unlocked':''}"><div class="achievement-icon">${a.icon}</div><div><h4>${a.name}</h4><p>${a.desc}</p>${un?'<small>✅ Получено</small>':`<small>Прогресс: ${(gameState.achProgress||{})[a.id]||0}/${a.target}</small>`}</div></div>`; }).join(''));
+}
+function showAchievementsModal(){ renderAchievements('achievementsModalList'); $('achievementsModal').classList.add('active'); }
+function showProfileModal(){
+  setH('profileContent', `
+    <div class="form-group"><label>Название компании/ИП</label><input id="companyName" value="${esc(gameState.profile.name)}" placeholder="ИП Иванов или ООО Ромашка"></div>
+    <div class="form-group"><label>Форма</label><select id="companyType"><option ${gameState.profile.type==='ИП'?'selected':''}>ИП</option><option ${gameState.profile.type==='ООО'?'selected':''}>ООО</option><option ${gameState.profile.type==='АО'?'selected':''}>АО</option></select></div>
+    <div class="form-group"><label>ИНН</label><input id="companyInn" value="${esc(gameState.profile.inn)}" maxlength="12"></div>
+    <div class="form-group"><label>Налоговая система</label><select id="companyTax"><option value="usn6" ${gameState.taxSystem==='usn6'?'selected':''}>УСН 6%</option><option value="usn15" ${gameState.taxSystem==='usn15'?'selected':''}>УСН 15%</option><option value="osno" ${gameState.taxSystem==='osno'?'selected':''}>ОСНО 20%</option></select></div>
+    <div class="form-group"><label>Опыт (лет)</label><input type="number" id="companyExp" value="${gameState.profile.exp}"></div>
+    <button class="btn" onclick="saveProfile()">💾 Сохранить</button>`);
+  $('profileModal').classList.add('active');
+}
+function saveProfile(){
+  gameState.profile.name=$('companyName')?.value||'';
+  gameState.profile.type=$('companyType')?.value||'ИП';
+  gameState.profile.inn=$('companyInn')?.value||'';
+  gameState.taxSystem=$('companyTax')?.value||'usn6';
+  gameState.profile.exp=parseInt($('companyExp')?.value)||0;
+  setT('companyDisplay','Компания: '+(gameState.profile.name||'не указана'));
+  notify('success','Сохранено',''); closeModal('profileModal'); saveGame();
+}
+function applyContractPenalties(){
+  gameState.contracts.forEach(c=>{
+    if(c.done||c.failed||c.debt) return;
+    if(gameState.day>c.deadlineDay){
+      const over=gameState.day-c.deadlineDay;
+      if(over>5){
+        c.failed=true;
+        const pen=Math.round(c.amount*0.1);
+        if(c.insured){ notify('info','🛡 Страховка покрыла неустойку', c.name); }
+        else {
+          gameState.mainAccount-=pen;
+          gameState.reputation.customers=Math.max(0,gameState.reputation.customers-20);
+          gameState.rating=Math.max(0,gameState.rating-20);
+          addTx('Неустойка (расторжение) '+c.name, -pen);
+          notify('error','Контракт расторгнут', c.name+' — штраф '+fmt(pen)+' ₽');
+        }
+      } else {
+        const pen=Math.round(c.amount*0.01);
+        if(!c.insured){ gameState.mainAccount-=pen; addTx('Неустойка за день '+c.name, -pen); notify('warning','Просрочка контракта', c.name+': −'+fmt(pen)+' ₽/день'); }
+      }
+    }
+  });
+}
+function processDebts(){
+  gameState.contracts.forEach(c=>{
+    if(c.debt && (c.debt.stage===1||c.debt.stage===3)){
+      c.debt.daysLeft--;
+      if(c.debt.daysLeft<=0) resolveDebt(c);
+    }
+  });
+}
+function endDay(silent){
+  gameState.day++;
+  const regen=40+(gameState.owned.includes('furniture')?5:0)+(gameState.owned.includes('plant')?2:0);
+  gameState.nerves=Math.min(100, gameState.nerves+regen);
+  gameState.morale=Math.max(0, gameState.morale-5);
+  if(gameState.employees.length && gameState.morale<30 && Math.random()<0.3){
+    const i=Math.floor(Math.random()*gameState.employees.length);
+    const e=gameState.employees.splice(i,1)[0];
+    notify('error','Сотрудник уволился', EMPLOYEES[e.pos].name+' — низкая мораль');
+  }
+  gameState.ecpDays=Math.max(0, gameState.ecpDays-1);
+  const prevSeason=gameState.season;
+  const si=Math.floor((gameState.day-1)/30)%4;
+  gameState.season=['Зима','Весна','Лето','Осень'][si];
+  if(gameState.season!==prevSeason){ rollSeasonMod(); goldenZatochka(); }
+  if(gameState.strategy && gameState.strategyUntil && gameState.day>gameState.strategyUntil){ gameState.strategy=null; notify('info','Стратегия завершена','Совет директоров соберётся снова'); }
+  if(gameState.rnpDays>0){ gameState.rnpDays--; if(gameState.rnpDays===0){notify('success','Вы вышли из РНП!',''); unlockAchievement('rnp_survivor');} }
+  if(gameState.day>=(gameState.nextReportDay||30)){ gameState.nextReportDay=(gameState.nextReportDay||30)+30; notify('info','Отчётный период','Начался новый период (30 дней)'); }
+  let sal=0;
+  if(gameState.employees.length && gameState.day-(gameState.lastSalaryDay||0)>=30){
+    sal=salarySum();
+    if(sal>0){ gameState.mainAccount-=sal; addTx('Зарплаты (1 мес.)', -sal); }
+    gameState.insuranceDue+=Math.round(sal*0.3);
+    gameState.lastSalaryDay=gameState.day;
+  }
+  if(gameState.credits>0){ const p=Math.floor(gameState.credits/12); gameState.mainAccount-=p; gameState.credits=Math.max(0,gameState.credits-p); addTx('Платёж по кредиту', -p); }
+  applyContractPenalties();
+  processDebts();
+  gameState.pricePrev=Object.assign({}, gameState.priceIndex);
+  Object.keys(gameState.priceIndex).forEach(c=>{
+    let idx=gameState.priceIndex[c]*(0.97+Math.random()*0.06);
+    gameState.priceIndex[c]=Math.min(1.15, Math.max(0.85, idx));
+  });
+  if(gameState.techs.bot){ gameState.mainAccount+=10000; addTx('Тендер-бот: пассивный доход', 10000); }
+  gameState.deposits=gameState.deposits.filter(d=>{
+    if(gameState.day>=d.openDay+d.term){
+      const payout=Math.round(d.amount*(1+d.rate*d.term/365));
+      gameState.mainAccount+=payout; addTx('Вклад закрыт', payout);
+      sfx('coin'); notify('success','Вклад созрел','+'+fmt(payout)+' ₽');
+      return false;
+    }
+    return true;
+  });
+  const newRev=gameState.stats.totalRevenue-(gameState.taxedRevenue||0);
+  if(newRev>0){
+    gameState.taxedRevenue=gameState.stats.totalRevenue;
+    if(gameState.taxSystem==='usn6') gameState.profitTax+=Math.round(newRev*0.06);
+    else if(gameState.taxSystem==='usn15') gameState.profitTax+=Math.round(newRev*0.15);
+    else { gameState.profitTax+=Math.round(newRev*0.2*0.5); gameState.vatDue+=Math.round(newRev*0.2*0.3); }
+  }
+  resolveFas();
+  const wk=Math.floor((gameState.day-1)/7);
+  if(wk!==gameState.week){ genChallenges(false); notify('info','Новая неделя','Новые челленджи'); }
+  generateDayTenders(); generateNews(); renderTenderTable();
+  gameState.daily={rest:0,coffee:0,massage:0,corp:0,teamCoffee:0};
+  unlockProgress('steel_nerves', gameState.day);
+  if(gameState.mainAccount>=5000000) unlockAchievement('millionaire');
+  if(Math.random()<0.12) triggerDilemma();
+  maybeBoard();
+  if(!silent){
+    setH('daySummaryContent', `
+      <h3>🌙 День ${gameState.day-1} завершён</h3>
+      <p>Нервы: +${regen} → ${gameState.nerves}% | Мораль: ${gameState.morale}%</p>
+      <p>Зарплаты: -${fmt(sal)} ₽ | Налоги к уплате: ${fmt(gameState.vatDue+gameState.profitTax+gameState.insuranceDue)} ₽</p>
+      <p>Новых тендеров: ${gameState.dayTenders.filter(t=>t.status==='active').length} | Модификатор: ${SEASON_MODS[gameState.seasonMod||'none']}</p>
+      <button class="btn" onclick="closeModal('daySummaryModal')">🌅 Начать день ${gameState.day}</button>`);
+    $('daySummaryModal').classList.add('active');
+  }
+  refreshStage(); updateAll(); saveGame();
+}
+function updateAll(){
+  setT('day', gameState.day); setT('seasonText', gameState.season); setT('ecp', gameState.ecpDays);
+  setT('rating', gameState.rating); setT('employeesCount', gameState.employees.length); setT('nerves', gameState.nerves);
+  setT('mainAccount', fmt(gameState.mainAccount)+' ₽'); setT('specialAccount', fmt(gameState.specialAccount)+' ₽');
+  setT('blockedAmount', fmt(gameState.blockedSecurities)+' ₽'); setT('creditsAmount', fmt(gameState.credits)+' ₽');
+  setT('creditLimit', fmt(gameState.creditLimit-gameState.credits)+' ₽');
+  setT('taxDue', fmt(gameState.vatDue+gameState.profitTax+gameState.insuranceDue)+' ₽');
+  setT('nextReport', Math.max(0, gameState.nextReportDay-gameState.day));
+  setT('titleDisplay', computeTitle());
+  setT('strategyDisplay', gameState.strategy? ({aggression:'⚔️ Агрессия',quality:'⭐ Качество',economy:'💰 Экономия'})[gameState.strategy]+' (до дня '+gameState.strategyUntil+')' : '—');
+  const nr=$('nervesRes'); if(nr) nr.className='resource'+(gameState.nerves<=20?' danger':gameState.nerves<=40?' warning':'');
+  const er=$('ecpRes'); if(er) er.className='resource'+(gameState.ecpDays<=10?' danger':gameState.ecpDays<=30?' warning':'');
+  const rr=$('rnpResource'); if(rr){ rr.style.display=gameState.rnpDays>0?'flex':'none'; setT('rnpDays', gameState.rnpDays); }
+  const rw=$('rnpWarning'); if(rw){ rw.classList.toggle('active', gameState.rnpDays>0); setT('rnpDaysCount', gameState.rnpDays); }
+  if(gameState.nerves<=0 && !gameState.gameOver){ gameState.gameOver=true; showGameOver(); }
+}
+function notify(type,title,msg){
+  if(type==='success') sfx('coin'); else if(type==='error') sfx('error'); else if(type==='warning') sfx('tick'); else sfx('click');
+  const n=document.createElement('div');
+  n.className='notification '+type;
+  n.innerHTML=`<div class="notification-title">${title}</div><div>${msg}</div>`;
+  document.body.appendChild(n);
+  setTimeout(()=>{ if(n.parentNode)n.remove(); },4000);
+}
+function closeModal(id){ const m=$(id); if(m)m.classList.remove('active'); stopAnalysisClock(); if(id==='auctionModal') stopAuctionClock2(); }
+function saveGame(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      mainAccount:gameState.mainAccount, specialAccount:gameState.specialAccount, blockedSecurities:gameState.blockedSecurities,
+      credits:gameState.credits, nerves:gameState.nerves, morale:gameState.morale, day:gameState.day, rating:gameState.rating, rnpDays:gameState.rnpDays,
+      ecpDays:gameState.ecpDays, officeLevel:gameState.officeLevel, employees:gameState.employees, certifications:gameState.certifications,
+      contracts:gameState.contracts, activeSecurities:gameState.activeSecurities, transactions:gameState.transactions, news:gameState.news,
+      fasCases:gameState.fasCases, achievements:gameState.achievements, deposits:gameState.deposits, owned:gameState.owned,
+      stats:gameState.stats, skills:gameState.skills, reputation:gameState.reputation, profile:gameState.profile,
+      taxSystem:gameState.taxSystem, season:gameState.season, dayTenders:gameState.dayTenders, gameOver:gameState.gameOver,
+      soundOn:gameState.soundOn, marketWins:gameState.marketWins, marketLosses:gameState.marketLosses,
+      priceIndex:gameState.priceIndex, pricePrev:gameState.pricePrev, inventory:gameState.inventory,
+      weekStats:gameState.weekStats, challenges:gameState.challenges, week:gameState.week,
+      rp:gameState.rp, techs:gameState.techs, prestigeCount:gameState.prestigeCount, streak:gameState.streak, lastLogin:gameState.lastLogin, dailyClaim:gameState.dailyClaim, cases:gameState.cases,
+      strategy:gameState.strategy, strategyUntil:gameState.strategyUntil, lastBoardDay:gameState.lastBoardDay, seasonMod:gameState.seasonMod,
+      inspectorSeason:gameState.inspectorSeason, inspectorUses:gameState.inspectorUses, inspectorPhase:gameState.inspectorPhase, inspectorLastResult:gameState.inspectorLastResult, honestCount:gameState.honestCount,
+      nextReportDay:gameState.nextReportDay, vatDue:gameState.vatDue, profitTax:gameState.profitTax, insuranceDue:gameState.insuranceDue,
+      lastSalaryDay:gameState.lastSalaryDay, taxedRevenue:gameState.taxedRevenue, achProgress:gameState.achProgress,
+      daily:gameState.daily, mode:gameState.mode, platform:gameState.platform
+    }));
+  }catch(e){}
+}
+function loadGame(){
+  try{
+    let s=localStorage.getItem(SAVE_KEY);
+    if(!s) s=localStorage.getItem('goszakupki_ultimate_v14');
+    if(!s) s=localStorage.getItem('goszakupki_ultimate_v13');
+    if(s){ const d=JSON.parse(s); Object.assign(gameState, d); }
+  }catch(e){}
+}
+window.onclick=e=>{ if(e.target.classList.contains('modal')){ e.target.classList.remove('active'); stopAnalysisClock(); stopAuctionClock2(); } };
+window.onload=init;
+</script>
+</body>
+</html>
