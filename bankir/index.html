@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Банкир v1.4 — Симулятор</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #e0e0e0; min-height: 100vh; padding: 10px; }
+.container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 250px 1fr 300px; gap: 15px; }
+.panel { background: rgba(30, 30, 50, 0.9); border: 2px solid #444; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+h1, h2, h3 { color: #4a9eff; margin-bottom: 10px; }
+.stat { display: flex; justify-content: space-between; padding: 8px; margin: 5px 0; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.9em; }
+.stat-value { color: #4aff4a; font-weight: bold; }
+.stat-value.warning { color: #ffaa4a; }
+.stat-value.danger { color: #ff4a4a; }
+.btn { background: linear-gradient(180deg, #3a3a5a 0%, #2a2a4a 100%); color: #fff; border: 2px solid #555; padding: 10px 16px; margin: 5px; cursor: pointer; border-radius: 4px; font-family: inherit; transition: all 0.2s; font-size: 0.9em; }
+.btn:hover { background: linear-gradient(180deg, #4a4a6a 0%, #3a3a5a 100%); border-color: #4a9eff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-approve { border-color: #4aff4a; }
+.btn-deny { border-color: #ff4a4a; }
+.btn-special { border-color: #ffaa4a; }
+.btn-small { padding: 6px 10px; font-size: 0.85em; }
+.client-card { background: rgba(40, 40, 60, 0.8); border: 2px solid #555; border-radius: 6px; padding: 15px; margin: 10px 0; }
+.client-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.client-name { font-size: 1.2em; color: #4a9eff; }
+.client-type { color: #ffaa4a; font-size: 0.9em; }
+.avatar { width: 64px; height: 64px; image-rendering: pixelated; border: 2px solid #555; border-radius: 4px; background: #111; }
+.dialogue-box { background: rgba(0,0,0,0.4); border: 2px solid #4a9eff; border-radius: 6px; padding: 15px; margin: 15px 0; min-height: 150px; }
+.dialogue-text { margin-bottom: 15px; line-height: 1.6; }
+.dialogue-options { display: flex; flex-direction: column; gap: 8px; }
+.option-btn { background: rgba(50, 50, 70, 0.8); border: 1px solid #666; padding: 10px; text-align: left; cursor: pointer; border-radius: 4px; color: #fff; font-family: inherit; transition: all 0.2s; }
+.option-btn:hover { background: rgba(70, 70, 90, 0.8); border-color: #4a9eff; }
+.energy-bar { width: 100%; height: 20px; background: rgba(0,0,0,0.5); border: 1px solid #555; border-radius: 10px; overflow: hidden; margin: 5px 0; }
+.energy-fill { height: 100%; background: linear-gradient(90deg, #4aff4a 0%, #aaff4a 100%); transition: width 0.3s; }
+.energy-fill.low { background: linear-gradient(90deg, #ff4a4a 0%, #ffaa4a 100%); }
+.log { max-height: 220px; overflow-y: auto; font-size: 0.85em; line-height: 1.4; }
+.log-entry { padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; }
+.modal.active { display: flex; }
+.modal-content { background: #2a2a4a; border: 3px solid #4a9eff; border-radius: 10px; padding: 30px; max-width: 700px; max-height: 85vh; overflow-y: auto; width: 90%; }
+.queue-item { background: rgba(40, 40, 60, 0.6); padding: 8px; margin: 5px 0; border-radius: 4px; font-size: 0.9em; border-left: 3px solid #4a9eff; }
+.queue-item.corp { border-left-color: #ffaa4a; }
+.queue-item.dep { border-left-color: #4aff4a; }
+.save-slot { background: rgba(0,0,0,0.3); padding: 10px; margin: 10px 0; border: 1px solid #555; border-radius: 4px; cursor: pointer; }
+.save-slot:hover { border-color: #4a9eff; }
+.mini-game { text-align: center; padding: 20px; }
+.mini-game-target { width: 300px; height: 40px; background: rgba(0,0,0,0.5); border: 2px solid #555; margin: 20px auto; position: relative; border-radius: 4px; }
+.mini-game-indicator { width: 10px; height: 100%; background: #4a9eff; position: absolute; left: 0; }
+.mini-game-zone { position: absolute; height: 100%; background: rgba(74, 255, 74, 0.3); border-left: 2px solid #4aff4a; border-right: 2px solid #4aff4a; }
+.notification { position: fixed; top: 20px; right: 20px; background: rgba(74, 158, 255, 0.95); color: #fff; padding: 15px 20px; border-radius: 6px; border: 2px solid #4a9eff; animation: slideIn 0.3s; z-index: 999; max-width: 320px; }
+@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.game-over { text-align: center; padding: 40px; }
+.game-over h1 { color: #ff4a4a; font-size: 3em; margin-bottom: 20px; }
+#actionButtons, #depositorButtons { margin-top: 15px; display: flex; flex-wrap: wrap; }
+.calendar { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center; border: 1px solid #4a9eff; }
+.calendar-date { font-size: 1.3em; color: #4a9eff; font-weight: bold; }
+.calendar-month { color: #ffaa4a; font-size: 1.1em; }
+.calendar-year { color: #888; font-size: 0.9em; }
+.tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+.tab { flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #555; border-radius: 4px; cursor: pointer; text-align: center; transition: all 0.2s; font-size: 0.9em; }
+.tab:hover { background: rgba(74, 158, 255, 0.2); }
+.tab.active { background: rgba(74, 158, 255, 0.3); border-color: #4a9eff; color: #4a9eff; }
+.anketa-field { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.anketa-label { color: #888; }
+.anketa-value { color: #fff; font-weight: bold; }
+.anketa-value.suspicious { color: #ffaa4a; }
+.anketa-value.danger { color: #ff4a4a; }
+.anketa-value.safe { color: #4aff4a; }
+.sb-verdict { padding: 15px; border-radius: 6px; margin: 10px 0; }
+.sb-verdict.clean { background: rgba(74, 255, 74, 0.2); border: 1px solid #4aff4a; }
+.sb-verdict.suspicious { background: rgba(255, 170, 74, 0.2); border: 1px solid #ffaa4a; }
+.sb-verdict.blacklist { background: rgba(255, 74, 74, 0.2); border: 1px solid #ff4a4a; }
+.debtor-item { background: rgba(40, 40, 60, 0.6); padding: 10px; margin: 5px 0; border-radius: 4px; border-left: 3px solid #ff4a4a; }
+.debtor-actions { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.report-stat { display: flex; justify-content: space-between; padding: 10px; margin: 5px 0; background: rgba(0,0,0,0.3); border-radius: 4px; }
+.report-stat-label { color: #888; }
+.report-stat-value { font-weight: bold; }
+.report-stat-value.positive { color: #4aff4a; }
+.report-stat-value.negative { color: #ff4a4a; }
+.report-stat-value.neutral { color: #4a9eff; }
+.limiter-bar { width: 100%; height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden; margin: 5px 0; }
+.limiter-fill { height: 100%; background: linear-gradient(90deg, #4a9eff 0%, #4aff4a 100%); transition: width 0.3s; }
+.limiter-fill.warning { background: linear-gradient(90deg, #ffaa4a 0%, #ff4a4a 100%); }
+.event-text { line-height: 1.6; margin-bottom: 20px; font-size: 1.05em; }
+.rank-badge { background: rgba(74, 158, 255, 0.2); border: 1px solid #4a9eff; padding: 8px; border-radius: 4px; text-align: center; margin-bottom: 10px; }
+.rank-name { color: #4a9eff; font-weight: bold; }
+.board { background: rgba(0,0,0,0.4); border: 1px solid #4aff4a; border-radius: 6px; padding: 10px; margin-bottom: 15px; }
+.board-title { color: #4aff4a; font-weight: bold; margin-bottom: 8px; }
+.board-row { display: flex; justify-content: space-between; font-size: 0.85em; padding: 3px 0; }
+.rate-control { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; }
+.rate-value { font-size: 2em; color: #4aff4a; font-weight: bold; min-width: 100px; text-align: center; }
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+  .container > .panel:nth-child(1) { order: 2; }
+  .container > .panel:nth-child(2) { order: 1; }
+  .container > .panel:nth-child(3) { order: 3; }
+  .btn { padding: 12px 14px; }
+  .option-btn { padding: 14px; }
+  .notification { max-width: 80%; }
+}
+@media (max-width: 600px) {
+  body { padding: 6px; font-size: 14px; }
+  .container { gap: 10px; }
+  .panel { padding: 10px; }
+  h2 { font-size: 1.1em; }
+  .stat { font-size: 0.8em; padding: 6px; }
+  .btn { padding: 10px 12px; font-size: 0.85em; margin: 4px; }
+  .option-btn { padding: 12px 10px; font-size: 0.9em; }
+  .calendar-date { font-size: 1.1em; }
+  .modal-content { padding: 16px; width: 96%; }
+  .mini-game-target { width: 90%; }
+  .notification { max-width: 92%; top: 8px; right: 8px; padding: 10px 14px; font-size: 0.9em; }
+  .queue-item, .debtor-item, .log-entry { font-size: 0.85em; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Левая панель -->
+  <div class="panel">
+    <h2>📊 Статистика</h2>
+    <div class="calendar">
+      <div class="calendar-date" id="calDate">1 января</div>
+      <div class="calendar-month" id="calDay">Понедельник</div>
+      <div class="calendar-year" id="calYear">2026</div>
+    </div>
+    <div class="rank-badge">
+      <div class="rank-name" id="rankName">Кредитный инспектор</div>
+      <div style="color:#888; font-size:0.85em;">Очки карьеры: <span id="careerPoints">0</span></div>
+    </div>
+    <div class="stat"><span>🏦 Капитал (резерв):</span><span class="stat-value" id="capital">100,000,000 ₽</span></div>
+    <div class="stat"><span>📤 В кредитах:</span><span class="stat-value" id="outstanding">0 ₽</span></div>
+    <div class="stat"><span>🏠 Вклады (обяз-ва):</span><span class="stat-value" id="depTotalStat">0 ₽</span></div>
+    <div class="stat"><span>🛡️ Собств. капитал:</span><span class="stat-value" id="equity">101,000,000 ₽</span></div>
+    <div class="stat"><span>💵 Касса:</span><span class="stat-value" id="cash">1,000,000 ₽</span></div>
+    <div class="stat"><span>📈 Ставка ЦБ:</span><span class="stat-value" id="keyRate">16.0%</span></div>
+    <div class="stat"><span>🏠 Ставка вкладов:</span><span class="stat-value" id="depRate">13.0%</span></div>
+    <div class="stat"><span>💹 Проценты за день:</span><span class="stat-value" id="netInterest">+0 ₽</span></div>
+    <div class="stat"><span>📉 NPL:</span><span class="stat-value" id="npl">0</span></div>
+    <div class="stat"><span>⭐ Репутация:</span><span class="stat-value" id="rep">50</span></div>
+    <div class="stat"><span>🎯 План:</span><span class="stat-value" id="plan">50,000 ₽</span></div>
+    <h3>⚡ Энергия</h3>
+    <div class="energy-bar"><div class="energy-fill" id="energyFill" style="width: 100%"></div></div>
+    <div class="stat"><span id="energyText">100 / 100</span></div>
+    <button class="btn btn-small" onclick="drinkCoffee()">☕ Кофе (+15)</button>
+    <button class="btn btn-small" onclick="takeLunch()">🍽️ Обед (+30)</button>
+    <button class="btn btn-small" onclick="takeRest()">💤 Отдых (+10)</button>
+    <h3>💰 Лимит дня</h3>
+    <div class="limiter-bar"><div class="limiter-fill" id="limiterFill" style="width: 0%"></div></div>
+    <div class="stat"><span id="limiterText">0 / 5,000,000 ₽</span></div>
+    <button class="btn btn-small" onclick="toggleSound()" id="soundBtn">🔊 Звук: вкл</button>
+    <h3>💾 Сохранения</h3>
+    <div class="save-slot" onclick="saveGame(1)">Слот 1: <span id="save1">пусто</span></div>
+    <div class="save-slot" onclick="saveGame(2)">Слот 2: <span id="save2">пусто</span></div>
+    <div class="save-slot" onclick="saveGame(3)">Слот 3: <span id="save3">пусто</span></div>
+    <button class="btn btn-small" onclick="showLoadModal()">📂 Загрузить</button>
+    <button class="btn btn-small" onclick="exportSaves()">💾 Экспорт</button>
+    <button class="btn btn-small" onclick="document.getElementById('importFile').click()">📥 Импорт</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="if(this.files&&this.files[0]){importSaves(this.files[0]);this.value='';}">
+  </div>
+
+  <!-- Центральная панель -->
+  <div class="panel">
+    <h2>🏦 Банк «Надеждный»</h2>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('work')">👷 Работа</div>
+      <div class="tab" onclick="switchTab('loans')">📈 Кредиты (<span id="loansCount">0</span>)</div>
+      <div class="tab" onclick="switchTab('debtors')">💀 Должники (<span id="debtorCount">0</span>)</div>
+    </div>
+    <div id="workTab">
+      <div id="welcomeScreen">
+        <h3>Добро пожаловать в банк!</h3>
+        <p>Одобрять надёжным, отказывать мошенникам.</p>
+        <p><b>Капитал (резерв)</b> падает при выдаче — деньги ушли в кредит, это НЕ убыток. Тело возвращается траншами каждые несколько дней (вкладка «Кредиты»).</p>
+        <p>Здоровье банка — <b>собственный капитал</b>: он должен расти. Норматив ЦБ: ниже 70 млн — отзыв лицензии.</p>
+        <button class="btn" onclick="startDay()" style="margin-top: 20px;">▶ Начать день</button>
+      </div>
+      <div id="clientCard" class="client-card" style="display:none;">
+        <div class="client-header">
+          <div>
+            <div class="client-name" id="clientName">Клиент</div>
+            <div class="client-type" id="clientType">Тип</div>
+          </div>
+          <div class="avatar" id="clientAvatar"></div>
+        </div>
+        <div id="clientInfo"></div>
+        <div id="docButtons" style="margin-top: 10px;"></div>
+        <div class="dialogue-box" id="dialogueBox" style="display:none;">
+          <div class="dialogue-text" id="dialogueText"></div>
+          <div class="dialogue-options" id="dialogueOptions"></div>
+        </div>
+        <div id="actionButtons">
+          <button class="btn btn-approve" onclick="approveLoan()">✅ Одобрить</button>
+          <button class="btn btn-deny" onclick="denyLoan()">❌ Отказать</button>
+          <button class="btn btn-special" onclick="requestSB()">🔍 СБ</button>
+          <button class="btn" onclick="startDialogue()">💬 Поговорить</button>
+          <button class="btn btn-special" onclick="startLieDetector()">🎯 Детектор</button>
+        </div>
+        <div id="depositorButtons" style="display:none;">
+          <button class="btn btn-approve" onclick="acceptDeposit()">✅ Принять вклад</button>
+          <button class="btn btn-deny" onclick="declineDepositor()">❌ Отказать</button>
+        </div>
+      </div>
+    </div>
+    <div id="loansTab" style="display:none;">
+      <h3>📈 Активные кредиты</h3>
+      <p style="color:#888; margin-bottom:10px;">Тело возвращается 3 траншами + проценты ежедневно в кассу.</p>
+      <div id="portfolioList"></div>
+      <h3 style="margin-top:15px;">🗂 История (последние 8)</h3>
+      <div id="loanHistory"></div>
+    </div>
+    <div id="debtorsTab" style="display:none;">
+      <h3>💀 Должники</h3>
+      <p style="color: #888; margin-bottom: 15px;">Звонок → предупреждение → СБ → списание</p>
+      <div id="debtorsList"></div>
+    </div>
+  </div>
+
+  <!-- Правая панель -->
+  <div class="panel">
+    <div class="board">
+      <div class="board-title">📊 ОБЩЕЕ ТАБЛО (неделя <span id="boardWeek">1</span>)</div>
+      <div class="board-row"><span>Выдано кредитов:</span><span id="boardIssued">0 ₽</span></div>
+      <div class="board-row"><span>Принято вкладов:</span><span id="boardDeposits">0 ₽</span></div>
+      <div class="board-row"><span>Возвращено тел:</span><span id="boardReturned">0 ₽</span></div>
+      <div class="board-row"><span>К возврату сейчас:</span><span id="boardToReturn">0 ₽</span></div>
+      <div class="board-row"><span>Вкладов сейчас:</span><span id="boardDepTotal">0 ₽</span></div>
+    </div>
+    <h3>👥 Очередь</h3>
+    <div id="queue"></div>
+    <h3 style="margin-top: 20px;">📜 Журнал</h3>
+    <div class="log" id="log"></div>
+    <button class="btn" onclick="endDay()" style="margin-top: 20px; width: 100%;">🌙 Завершить день</button>
+  </div>
+</div>
+
+<!-- Модалки -->
+<div class="modal" id="saveModal">
+  <div class="modal-content">
+    <h2>📂 Загрузить игру</h2>
+    <div class="save-slot" onclick="loadGame(1)">Слот 1: <span id="load1">пусто</span></div>
+    <div class="save-slot" onclick="loadGame(2)">Слот 2: <span id="load2">пусто</span></div>
+    <div class="save-slot" onclick="loadGame(3)">Слот 3: <span id="load3">пусто</span></div>
+    <button class="btn" onclick="closeModal('saveModal')">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal" id="depositRateModal">
+  <div class="modal-content" style="text-align:center;">
+    <h2>🏠 Ставка по вкладам на сегодня</h2>
+    <p style="color:#888;">Выше ставка → больше вкладчиков и выше лимит выдачи, но дороже деньги.</p>
+    <p style="color:#888;">Ставка ЦБ сегодня: <span id="drmKeyRate"></span>%</p>
+    <div class="rate-control">
+      <button class="btn" onclick="adjustDepositRate(-0.5)">−0.5</button>
+      <div class="rate-value" id="depRateValue">13.0%</div>
+      <button class="btn" onclick="adjustDepositRate(0.5)">+0.5</button>
+    </div>
+    <button class="btn btn-approve" onclick="confirmDepositRate()">✔ Подтвердить и начать день</button>
+  </div>
+</div>
+
+<div class="modal" id="anketaModal">
+  <div class="modal-content">
+    <h2>📋 Анкета клиента</h2>
+    <div id="anketaContent"></div>
+    <button class="btn" onclick="closeModal('anketaModal')" style="margin-top: 20px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal" id="sbModal">
+  <div class="modal-content">
+    <h2>🔍 Вердикт СБ</h2>
+    <div id="sbContent"></div>
+    <button class="btn" onclick="closeModal('sbModal')" style="margin-top: 20px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal" id="reportModal">
+  <div class="modal-content">
+    <h2>📊 Отчёт за день <span id="reportDay"></span></h2>
+    <div id="reportContent"></div>
+    <button class="btn" onclick="closeReport()" style="margin-top: 20px;">Продолжить</button>
+  </div>
+</div>
+
+<div class="modal" id="eventModal">
+  <div class="modal-content">
+    <h2 id="eventTitle">🌙 Ночное событие</h2>
+    <div class="event-text" id="eventText"></div>
+    <div id="eventChoices"></div>
+  </div>
+</div>
+
+<div class="modal" id="promotionModal">
+  <div class="modal-content" style="text-align:center;">
+    <h1 style="color:#4aff4a;">🎉 ПОВЫШЕНИЕ!</h1>
+    <p id="promotionText" style="font-size:1.2em; margin:20px 0;"></p>
+    <button class="btn" onclick="closeModal('promotionModal')">Отлично!</button>
+  </div>
+</div>
+
+<div class="modal" id="miniGameModal">
+  <div class="modal-content">
+    <h2>🎯 Детектор лжи</h2>
+    <div class="mini-game">
+      <p>Нажмите, когда индикатор попадёт в зелёную зону (точность 80%)</p>
+      <div class="mini-game-target">
+        <div class="mini-game-zone" id="miniGameZone"></div>
+        <div class="mini-game-indicator" id="miniGameIndicator"></div>
+      </div>
+      <button class="btn" onclick="miniGameAction()">НАЖАТЬ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="gameOverModal">
+  <div class="modal-content game-over">
+    <h1>💀 GAME OVER</h1>
+    <p id="gameOverReason"></p>
+    <button class="btn" onclick="location.reload()">Начать заново</button>
+  </div>
+</div>
+
+<script>
+// === КОНСТАНТЫ ===
+const BASE_DAILY_LIMIT = 5000000;
+const START_CAPITAL = 100000000;
+const EQUITY_WARN = 80000000;   // норматив ЦБ по СОБСТВЕННОМУ капиталу
+const EQUITY_DEATH = 70000000;
+const MONTHS_NAMES = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MONTHS_EN = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+const WEEKDAYS = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+const RANKS = [
+  { name: 'Кредитный инспектор', points: 0 },
+  { name: 'Старший инспектор', points: 30 },
+  { name: 'Начальник отдела', points: 80 },
+  { name: 'Менеджер по юрлицам', points: 150 },
+  { name: 'Зампред правления', points: 250 },
+  { name: 'Председатель правления', points: 400 }
+];
+
+// === СОСТОЯНИЕ ===
+const state = {
+  day: 1, cash: 1000000, capital: START_CAPITAL, keyRate: 16.0, depositRate: 13.0,
+  npl: 0, reputation: 50, plan: 50000,
+  energy: 100, maxEnergy: 100, dailyProfit: 0, dailyIssued: 0,
+  dailyInterestIncome: 0, dailyInterestExpense: 0, returnedToday: 0,
+  queue: [], current: null, loans: [], deposits: [], debtors: [], loanHistory: [],
+  coffeeCount: 0, lunchCount: 0, restCount: 0,
+  lieDetected: false, dayStarted: false,
+  approvedToday: 0, deniedToday: 0, feesToday: 0,
+  sbVerdict: null, rank: 0, careerPoints: 0,
+  soundOn: true, lieDetectorUsed: false,
+  clientDB: {},
+  weekStats: { week: 1, issued: 0, deposited: 0, returned: 0 },
+  specialNext: false, capitalWarned: false,
+  gameOver: false, gameOverReason: '', courseFatigue: 0, decidedAt: 0
+};
+
+// === ДАННЫЕ ===
+const CLIENT_TYPES = [
+  { type: 'Потребительский', amount: [50000, 500000], risk: 0.08, energy: 8 },
+  { type: 'Ипотека', amount: [2000000, 8000000], risk: 0.12, energy: 15 },
+  { type: 'Автокредит', amount: [500000, 3000000], risk: 0.10, energy: 12 },
+  { type: 'Бизнес', amount: [500000, 5000000], risk: 0.25, energy: 18 },
+  { type: 'Школьный', amount: [30000, 150000], risk: 0.05, energy: 6, season: ['august','september'] },
+  { type: 'Серый', amount: [1000000, 10000000], risk: 0.60, energy: 20 }
+];
+const CORP_TYPES = [
+  { type: 'Юрлицо: оборотный кредит', amount: [5000000, 30000000], risk: 0.18, energy: 25 },
+  { type: 'Юрлицо: инвестпроект', amount: [20000000, 100000000], risk: 0.30, energy: 35 },
+  { type: 'Юрлицо: овердрафт', amount: [2000000, 10000000], risk: 0.12, energy: 20 }
+];
+const LAST_NAMES = ['Иванов','Петров','Сидоров','Козлов','Смирнов','Новиков','Морозов','Волков','Алексеев','Лебедев'];
+const FIRST_M = ['Иван','Алексей','Дмитрий','Сергей','Андрей','Михаил','Владимир'];
+const FIRST_F = ['Анна','Мария','Елена','Ольга','Татьяна','Наталья','Ирина'];
+const PATR_M = ['Иванович','Петрович','Сергеевич','Алексеевич','Дмитриевич'];
+const PATR_F = ['Ивановна','Петровна','Сергеевна','Алексеевна','Дмитриевна'];
+const PURPOSES = ['ремонт квартиры','покупка телефона','оплата обучения','покупка автомобиля','лечение','свадьба','путешествие','покупка мебели'];
+const COMPANIES = ['ООО "Ромашка"','АО "Вектор"','ПАО "ТехноПром"','ИП Сидоров','ООО "СтройМастер"','ЗАО "Инвест"'];
+const POSITIONS = ['менеджер','инженер','бухгалтер','директор','продавец','водитель','программист'];
+
+// === ЗВУК ===
+let audioCtx = null;
+function playSound(type) {
+  if (!state.soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const freqs = { click: 440, approve: 660, deny: 220, error: 150, notify: 880, promotion: 1046 };
+    osc.frequency.value = freqs[type] || 440;
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+  } catch (e) { /* звук недоступен */ }
+}
+function toggleSound() {
+  state.soundOn = !state.soundOn;
+  document.getElementById('soundBtn').textContent = state.soundOn ? '🔊 Звук: вкл' : '🔇 Звук: выкл';
+}
+
+// === УТИЛИТЫ ===
+function log(msg) {
+  const el = document.getElementById('log');
+  el.innerHTML = `<div class="log-entry">[${getFullDate()}] ${esc(msg)}</div>` + el.innerHTML;
+}
+function notify(msg) {
+  const n = document.createElement('div');
+  n.className = 'notification';
+  n.textContent = msg;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3000);
+  playSound('notify');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randInt(min, max) { return Math.floor(min + Math.random() * (max - min)); }
+function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
+// экранирование для innerHTML: имена приходят и из импортируемых сейвов
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// репутация жёстко в границах 0..100
+function addRep(d) { state.reputation = Math.max(0, Math.min(100, state.reputation + d)); }
+
+// === КАЛЕНДАРЬ ===
+function getGameDate() {
+  const start = new Date(2026, 0, 1);
+  const cur = new Date(start);
+  cur.setDate(start.getDate() + state.day - 1);
+  return cur;
+}
+function getFullDate() {
+  const d = getGameDate();
+  return `${d.getDate()} ${MONTHS_NAMES[d.getMonth()]} ${d.getFullYear()}, ${WEEKDAYS[d.getDay() === 0 ? 6 : d.getDay() - 1]}`;
+}
+function getCurrentMonthEn() { return MONTHS_EN[getGameDate().getMonth()]; }
+function updateCalendar() {
+  const d = getGameDate();
+  document.getElementById('calDate').textContent = `${d.getDate()} ${MONTHS_NAMES[d.getMonth()]}`;
+  document.getElementById('calDay').textContent = WEEKDAYS[d.getDay() === 0 ? 6 : d.getDay() - 1];
+  document.getElementById('calYear').textContent = d.getFullYear();
+}
+
+// === ЭНЕРГИЯ ===
+function useEnergy(a) {
+  state.energy = Math.max(0, state.energy - a);
+  updateEnergyUI();
+  if (state.energy <= 0) notify('⚠️ Вы полностью истощены!');
+}
+function updateEnergyUI() {
+  const p = (state.energy / state.maxEnergy) * 100;
+  const fill = document.getElementById('energyFill');
+  fill.style.width = p + '%';
+  fill.classList.toggle('low', p < 30);
+  document.getElementById('energyText').textContent = `${state.energy} / ${state.maxEnergy}`;
+}
+function drinkCoffee() {
+  if (state.coffeeCount >= 3) { notify('⚠️ Максимум 3 кофе в день!'); return; }
+  state.energy = Math.min(state.maxEnergy, state.energy + 15);
+  state.coffeeCount++; updateEnergyUI(); log('☕ Кофе (+15 энергии)'); playSound('click');
+}
+function takeLunch() {
+  if (state.lunchCount >= 1) { notify('⚠️ Обед уже был!'); return; }
+  state.energy = Math.min(state.maxEnergy, state.energy + 30);
+  state.lunchCount++; updateEnergyUI(); log('🍽️ Обед (+30 энергии)'); playSound('click');
+}
+function takeRest() {
+  if (state.restCount >= 2) { notify('⚠️ Максимум 2 перерыва!'); return; }
+  state.energy = Math.min(state.maxEnergy, state.energy + 10);
+  state.restCount++; updateEnergyUI(); log('💤 Отдых (+10 энергии)'); playSound('click');
+}
+
+// === ЛИМИТ И КАПИТАЛ ===
+function getOutstanding() { return state.loans.reduce((s, l) => s + (l.amount - l.paid), 0); }
+function getDepTotal() { return state.deposits.reduce((s, d) => s + d.amount, 0); }
+function getEquity() { return state.capital + getOutstanding() - getDepTotal() + state.cash; }
+function getDailyLimit() { return BASE_DAILY_LIMIT + getDepTotal() * 0.10; }
+// NPL-процент по ТЕКУЩЕМУ портфелю (должники/все): пожизненный счётчик дефолтов
+// навечно задирает процент и убивал игру на длинной дистанции
+function getNplRatio() {
+  const total = state.loans.length + state.debtors.length;
+  if (total < 8) return 0; // портфель слишком мал — норматив не применяется
+  return state.debtors.length / total;
+}
+function updateLimiter() {
+  const limit = getDailyLimit();
+  const p = (state.dailyIssued / limit) * 100;
+  const fill = document.getElementById('limiterFill');
+  fill.style.width = Math.min(100, p) + '%';
+  fill.classList.toggle('warning', p > 80);
+  document.getElementById('limiterText').textContent = `${fmt(state.dailyIssued)} / ${fmt(limit)} ₽`;
+}
+
+// === БАЗА КЛИЕНТОВ ===
+function ensureDB(name) {
+  if (!state.clientDB[name]) state.clientDB[name] = { score: randInt(500, 800), taken: 0, returned: 0, defaults: 0 };
+  return state.clientDB[name];
+}
+function requestBKI() {
+  if (!state.current || state.current.isDepositor) return;
+  if (state.current.bkiRevealed) { notify('⚠️ Уже запрошено!'); return; }
+  if (state.cash < 2000) { notify('⚠️ Недостаточно средств!'); return; }
+  if (state.energy < 2) { notify('⚠️ Недостаточно энергии!'); return; }
+  state.cash -= 2000;
+  useEnergy(2);
+  const c = state.current;
+  const rec = ensureDB(c.name);
+  c.bkiRevealed = true;
+  c.score = rec.score;
+  log(`🗂 БКИ по ${esc(c.name)}: балл ${rec.score}, кредитов ${rec.taken}, возвратов ${rec.returned}, дефолтов ${rec.defaults}`);
+  notify(`🗂 БКИ: балл ${rec.score}, дефолтов: ${rec.defaults}`);
+  displayClientInfo();
+  updateUI();
+}
+
+// === ПИКСЕЛЬ-АРТ ===
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+  return Math.abs(h);
+}
+function avatarSVG(client) {
+  const h = hashStr(client.name + client.type);
+  const skins = ['#f5d0a9','#e8b88a','#d4a06a','#c68863'];
+  const hairs = ['#3a2a1a','#5a4030','#1a1a1a','#8a6a4a','#aaaaaa'];
+  const clothes = ['#3a5a8a','#5a3a3a','#3a6a4a','#6a5a3a','#4a3a6a'];
+  const skin = skins[h % skins.length], hair = hairs[(h >> 3) % hairs.length], cloth = clothes[(h >> 6) % clothes.length];
+  const px = (x, y, c) => `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`;
+  let svg = '';
+  for (let x = 2; x <= 5; x++) { svg += px(x, 0, hair); svg += px(x, 1, hair); }
+  for (let y = 2; y <= 4; y++) for (let x = 2; x <= 5; x++) svg += px(x, y, skin);
+  svg += px(3, 3, '#1a1a1a'); svg += px(4, 3, '#1a1a1a');
+  svg += px(3, 4, '#8a4a4a'); svg += px(4, 4, '#8a4a4a');
+  for (let y = 5; y <= 7; y++) for (let x = 1; x <= 6; x++) svg += px(x, y, cloth);
+  if (client.corporate) { svg += px(3, 5, '#aa2a2a'); svg += px(4, 5, '#aa2a2a'); svg += px(3, 6, '#aa2a2a'); svg += px(4, 6, '#aa2a2a'); }
+  if (client.isDepositor) { svg += px(3, 5, '#2aaa2a'); svg += px(4, 5, '#2aaa2a'); }
+  if (client.suspicious) { svg += px(2, 3, '#1a1a1a'); svg += px(5, 3, '#1a1a1a'); }
+  return `<svg viewBox="0 0 8 8" width="64" height="64" style="image-rendering:pixelated;">${svg}</svg>`;
+}
+
+// === ГЕНЕРАЦИЯ ===
+function makePersonFields(c) {
+  const isFemale = Math.random() > 0.5;
+  c.name = c.name || `${rand(LAST_NAMES)}${isFemale ? 'а' : ''} ${isFemale ? rand(FIRST_F) : rand(FIRST_M)} ${isFemale ? rand(PATR_F) : rand(PATR_M)}`;
+  c.age = randInt(21, 65);
+  c.passport = `${randInt(1000,9999)} ${randInt(100000,999999)}`;
+  c.inn = `${randInt(100000000000, 999999999999)}`;
+  c.company = rand(COMPANIES); c.position = rand(POSITIONS); c.experience = randInt(1, 20);
+  c.salary = randInt(25000, 150000);
+  c.phone = `+7 (${randInt(900,999)}) ${randInt(100,999)}-${randInt(10,99)}-${randInt(10,99)}`;
+  c.relativePhone = `+7 (${randInt(900,999)}) ${randInt(100,999)}-${randInt(10,99)}-${randInt(10,99)}`;
+  c.colleaguePhone = `+7 (${randInt(900,999)}) ${randInt(100,999)}-${randInt(10,99)}-${randInt(10,99)}`;
+  return c;
+}
+function generatePerson() {
+  const month = getCurrentMonthEn();
+  const available = CLIENT_TYPES.filter(t => !t.season || t.season.includes(month));
+  const template = rand(available);
+  const c = {
+    corporate: false, isDepositor: false, name: null,
+    type: template.type, amount: randInt(template.amount[0], template.amount[1]),
+    risk: template.risk, energy: template.energy,
+    suspicious: template.type === 'Серый' ? Math.random() > 0.3 : Math.random() > 0.85,
+    purpose: rand(PURPOSES), term: randInt(6, 60),
+    documents: Math.random() > 0.2 ? 'в порядке' : 'есть замечания',
+    docRequests: {}, returning: false
+  };
+  const keys = Object.keys(state.clientDB);
+  if (keys.length > 0 && Math.random() < 0.4) {
+    c.name = rand(keys);
+    const rec = state.clientDB[c.name] || ensureDB(c.name); // страховка при импорте сейва
+    c.returning = true;
+    c.risk = template.risk * Math.max(0.5, Math.min(2.0, 700 / rec.score));
+    if (rec.defaults > 0) c.suspicious = true;
+  }
+  makePersonFields(c);
+  ensureDB(c.name);
+  return c;
+}
+function generateCorp() {
+  const template = rand(CORP_TYPES);
+  return {
+    corporate: true, isDepositor: false,
+    name: rand(COMPANIES), director: `${rand(LAST_NAMES)} ${rand(FIRST_M)} ${rand(PATR_M)}`,
+    type: template.type, amount: randInt(template.amount[0], template.amount[1]),
+    risk: template.risk, energy: template.energy,
+    suspicious: Math.random() > 0.75,
+    purpose: rand(['пополнение оборотных средств','закупка оборудования','расширение производства','рефинансирование долгов']),
+    term: randInt(12, 60),
+    inn: `${randInt(1000000000, 9999999999)}`,
+    revenue: randInt(10000000, 500000000),
+    corpDebt: randInt(0, 50000000),
+    profitability: randInt(-5, 30),
+    yearsOnMarket: randInt(1, 25),
+    beneficiaries: rand(['1 бенефициар (прозрачно)','2 бенефициара','офшорная структура','скрытые бенефициары']),
+    documents: Math.random() > 0.3 ? 'в порядке' : 'есть замечания',
+    docRequests: {}, returning: false
+  };
+}
+function generateDepositor() {
+  const c = {
+    corporate: false, isDepositor: true, name: null,
+    type: 'Вкладчик', amount: randInt(100000, 5000000),
+    desiredRate: +(state.keyRate - 5 + Math.random() * 4).toFixed(1),
+    term: randInt(6, 24), energy: 4, docRequests: {}, returning: false
+  };
+  makePersonFields(c);
+  ensureDB(c.name);
+  return c;
+}
+function generateQueue() {
+  const queue = [];
+  if (state.specialNext) {
+    const c = generatePerson();
+    c.special = true; c.suspicious = Math.random() > 0.5; c.risk = 0.45;
+    c.amount = randInt(3000000, 8000000);
+    c.type = 'Особый клиент (протеже)';
+    queue.push(c);
+    state.specialNext = false;
+  }
+  const clients = 5 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < clients; i++) {
+    queue.push(state.rank >= 3 && Math.random() < 0.4 ? generateCorp() : generatePerson());
+  }
+  let depCount = 1;
+  if (state.depositRate >= state.keyRate - 2) depCount++;
+  if (state.depositRate >= state.keyRate) depCount++;
+  for (let i = 0; i < depCount; i++) queue.push(generateDepositor());
+  return queue;
+}
+
+// === СТАВКА ВКЛАДОВ ===
+function startDay() {
+  if (state.gameOver) return;
+  document.getElementById('drmKeyRate').textContent = state.keyRate.toFixed(1);
+  document.getElementById('depRateValue').textContent = state.depositRate.toFixed(1) + '%';
+  document.getElementById('depositRateModal').classList.add('active');
+}
+function adjustDepositRate(delta) {
+  state.depositRate = Math.max(1, Math.min(30, +(state.depositRate + delta).toFixed(1)));
+  document.getElementById('depRateValue').textContent = state.depositRate.toFixed(1) + '%';
+  playSound('click');
+}
+function confirmDepositRate() {
+  closeModal('depositRateModal');
+  beginDay();
+}
+function beginDay() {
+  state.dayStarted = true;
+  if (state.courseFatigue > 0) { // усталость от курса — только на этот рабочий день
+    state.energy = Math.max(0, state.energy - state.courseFatigue);
+    state.courseFatigue = 0;
+  }
+  state.dailyIssued = 0; state.approvedToday = 0; state.deniedToday = 0;
+  state.dailyProfit = 0; state.feesToday = 0; state.returnedToday = 0;
+  state.dailyInterestIncome = 0; state.dailyInterestExpense = 0;
+  state.sbVerdict = null;
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('clientCard').style.display = 'block';
+  state.queue = generateQueue();
+  log(`☀ День начался. Очередь: ${state.queue.length}. Ставка вкладов: ${state.depositRate.toFixed(1)}%`);
+  playSound('click');
+  updateUI();
+  nextClient();
+}
+
+function nextClient() {
+  if (state.gameOver) return;
+  if (state.queue.length === 0) {
+    notify('📋 Очередь пуста. Можете завершить день.');
+    state.current = null;
+    document.getElementById('clientCard').style.display = 'none';
+    updateUI();
+    return;
+  }
+  state.current = state.queue.shift();
+  state.lieDetected = false; state.sbVerdict = null; state.lieDetectorUsed = false;
+  document.getElementById('clientCard').style.display = 'block';
+  document.getElementById('dialogueBox').style.display = 'none';
+  const isDep = state.current.isDepositor;
+  document.getElementById('actionButtons').style.display = isDep ? 'none' : 'flex';
+  document.getElementById('depositorButtons').style.display = isDep ? 'flex' : 'none';
+  displayClientInfo();
+  updateUI();
+}
+
+function displayClientInfo() {
+  const c = state.current;
+  document.getElementById('clientName').textContent = c.name;
+  document.getElementById('clientAvatar').innerHTML = avatarSVG(c);
+  let info = '';
+  if (c.isDepositor) {
+    document.getElementById('clientType').textContent = `Вкладчик • ${fmt(c.amount)} ₽ • ${c.term} мес.`;
+    info = `
+      <p>Хочет открыть вклад на <b>${fmt(c.amount)} ₽</b> сроком на ${c.term} мес.</p>
+      <p>Желаемая ставка: <b>${c.desiredRate}%</b> (наша: ${state.depositRate.toFixed(1)}%)</p>
+      ${state.depositRate < c.desiredRate ? '<p style="color:#ffaa4a;">⚠ Наша ставка ниже желаемой — может уйти.</p>' : '<p style="color:#4aff4a;">✓ Наша ставка его устраивает.</p>'}`;
+  } else if (c.corporate) {
+    document.getElementById('clientType').textContent = `${c.type} • ${fmt(c.amount)} ₽ • ${c.term} мес.`;
+    info = `
+      <p><b>Директор:</b> ${c.director}</p>
+      <p><b>Цель:</b> ${c.purpose}</p>
+      <p><b>Выручка:</b> ${(c.revenue/1000000).toFixed(1)} млн ₽/год | <b>Рентабельность:</b> ${c.profitability}%</p>
+      <p><b>Бенефициары:</b> ${c.beneficiaries}</p>
+      ${c.bkiRevealed ? `<p style="color:#4aff4a;">🗂 БКИ: балл ${c.score}</p>` : ''}
+      ${c.suspicious ? '<p style="color: #ffaa4a;">⚠ Что-то не так...</p>' : ''}`;
+  } else {
+    document.getElementById('clientType').textContent = `${c.type} • ${fmt(c.amount)} ₽ • ${c.term} мес.`;
+    const rec = state.clientDB[c.name] || ensureDB(c.name); // страховка при импорте сейва
+    info = `
+      <p><b>Цель:</b> ${c.purpose}</p>
+      <p><b>Доход:</b> ${fmt(c.salary)} ₽/мес | <b>Работа:</b> ${c.company}, ${c.position}</p>
+      ${c.returning ? `<p style="color:#4a9eff;">🔄 Постоянный клиент: кредитов ${rec.taken}, возвратов ${rec.returned}, дефолтов ${rec.defaults}</p>` : ''}
+      ${c.bkiRevealed ? `<p style="color:#4aff4a;">🗂 БКИ: балл ${c.score}</p>` : ''}
+      ${c.special ? '<p style="color:#ffaa4a;">⚠ ПРОТЕЖЕ СВЕРХУ: слово дано, но риск ваш.</p>' : ''}
+      <p><b>Документы:</b> ${c.documents}</p>
+      ${c.suspicious ? '<p style="color: #ffaa4a;">⚠ Что-то не так...</p>' : ''}`;
+  }
+  if (state.sbVerdict) info += `<p style="color: #4a9eff;">🔍 СБ: ${state.sbVerdict.text}</p>`;
+  document.getElementById('clientInfo').innerHTML = info;
+  const db = document.getElementById('docButtons');
+  if (c.isDepositor) { db.innerHTML = `<button class="btn btn-small" onclick="showAnketa()">📋 Анкета</button>`; return; }
+  const docs = c.corporate
+    ? [['balance','📊 Бухгалтерия'],['tax','🧾 Налоги'],['benef','👥 Бенефициары']]
+    : [['2ndfl','📄 2-НДФЛ'],['extract','📊 Выписка'],['contacts','📞 Контакты']];
+  db.innerHTML = `<button class="btn btn-small" onclick="showAnketa()">📋 Анкета</button>` +
+    docs.map(d => `<button class="btn btn-small" onclick="requestDoc('${d[0]}')">${d[1]}</button>`).join('') +
+    `<button class="btn btn-small" onclick="requestBKI()">🗂 БКИ (2000₽)</button>`;
+}
+
+// === ВКЛАДКИ ===
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('workTab').style.display = tab === 'work' ? 'block' : 'none';
+  document.getElementById('loansTab').style.display = tab === 'loans' ? 'block' : 'none';
+  document.getElementById('debtorsTab').style.display = tab === 'debtors' ? 'block' : 'none';
+  const idx = { work: 0, loans: 1, debtors: 2 }[tab];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  if (tab === 'debtors') renderDebtors();
+  if (tab === 'loans') renderPortfolio();
+  playSound('click');
+}
+
+// === ПОРТФЕЛЬ КРЕДИТОВ ===
+function renderPortfolio() {
+  const el = document.getElementById('portfolioList');
+  document.getElementById('loansCount').textContent = state.loans.length;
+  if (!state.loans.length) {
+    el.innerHTML = '<p style="color:#888;">Активных кредитов нет.</p>';
+  } else {
+    el.innerHTML = state.loans.map(l => {
+      const remaining = l.amount - l.paid;
+      const progress = Math.round(l.paid / l.amount * 100);
+      const nextIn = Math.max(0, l.nextPay - l.age);
+      return `<div class="debtor-item" style="border-left-color:#4aff4a;">
+        <div><b>${esc(l.name)}</b> — остаток ${fmt(remaining)} ₽ (${l.type})</div>
+        <div style="color:#888;font-size:.9em;">Ставка ${l.rate.toFixed(1)}% | день ${l.age}/${l.termDays} | след. транш через ${nextIn} дн.</div>
+        <div class="limiter-bar"><div class="limiter-fill" style="width:${progress}%"></div></div>
+        <div style="font-size:.85em;color:#888;">Погашено: ${progress}%</div>
+      </div>`;
+    }).join('');
+  }
+  const hist = document.getElementById('loanHistory');
+  hist.innerHTML = state.loanHistory.slice(-8).reverse().map(h =>
+    `<div class="log-entry">День ${h.day}: ${esc(h.name)} — ${h.result === 'returned' ? '✅ возвращено' : '💸 дефолт'} ${fmt(h.amount)} ₽</div>`
+  ).join('') || '<em>Пусто</em>';
+}
+
+// === АНКЕТА ===
+function showAnketa() {
+  if (!state.current) return;
+  const c = state.current;
+  const docStatus = (key) => {
+    if (c.docRequests[key] === 'verified') return '<span class="anketa-value safe">✓ проверено</span>';
+    if (c.docRequests[key] === 'fake') return '<span class="anketa-value danger">✗ подделка!</span>';
+    if (c.docRequests[key] === 'requested') return '<span class="anketa-value suspicious">… запрошено</span>';
+    return '<span class="anketa-value">—</span>';
+  };
+  let html = '';
+  if (c.isDepositor) {
+    html = `
+      <div class="anketa-field"><span class="anketa-label">ФИО:</span><span class="anketa-value">${esc(c.name)}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Сумма вклада:</span><span class="anketa-value">${fmt(c.amount)} ₽</span></div>
+      <div class="anketa-field"><span class="anketa-label">Срок:</span><span class="anketa-value">${c.term} мес.</span></div>
+      <div class="anketa-field"><span class="anketa-label">Желаемая ставка:</span><span class="anketa-value">${c.desiredRate}%</span></div>`;
+  } else if (c.corporate) {
+    html = `
+      <div class="anketa-field"><span class="anketa-label">Компания:</span><span class="anketa-value">${esc(c.name)}</span></div>
+      <div class="anketa-field"><span class="anketa-label">ИНН:</span><span class="anketa-value">${c.inn}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Директор:</span><span class="anketa-value">${c.director}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Лет на рынке:</span><span class="anketa-value">${c.yearsOnMarket}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Выручка:</span><span class="anketa-value">${fmt(c.revenue)} ₽/год</span></div>
+      <div class="anketa-field"><span class="anketa-label">Долги:</span><span class="anketa-value ${c.corpDebt > 20000000 ? 'danger' : ''}">${fmt(c.corpDebt)} ₽</span></div>
+      <div class="anketa-field"><span class="anketa-label">Рентабельность:</span><span class="anketa-value ${c.profitability < 0 ? 'danger' : 'safe'}">${c.profitability}%</span></div>
+      <div class="anketa-field"><span class="anketa-label">Бенефициары:</span><span class="anketa-value ${c.beneficiaries.includes('офшор') || c.beneficiaries.includes('скрыт') ? 'suspicious' : ''}">${c.beneficiaries}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Бухгалтерия:</span>${docStatus('balance')}</div>
+      <div class="anketa-field"><span class="anketa-label">Налоги:</span>${docStatus('tax')}</div>
+      <div class="anketa-field"><span class="anketa-label">Бенефициары (проверка):</span>${docStatus('benef')}</div>`;
+  } else {
+    const rec = state.clientDB[c.name] || ensureDB(c.name); // страховка при импорте сейва
+    html = `
+      <div class="anketa-field"><span class="anketa-label">ФИО:</span><span class="anketa-value">${esc(c.name)}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Возраст:</span><span class="anketa-value">${c.age} лет</span></div>
+      <div class="anketa-field"><span class="anketa-label">Паспорт:</span><span class="anketa-value">${c.passport}</span></div>
+      <div class="anketa-field"><span class="anketa-label">ИНН:</span><span class="anketa-value">${c.inn}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Работа:</span><span class="anketa-value">${c.company}, ${c.position}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Стаж / доход:</span><span class="anketa-value">${c.experience} лет / ${fmt(c.salary)} ₽</span></div>
+      <div class="anketa-field"><span class="anketa-label">Телефоны:</span><span class="anketa-value">${c.phone}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Родственник / коллега:</span><span class="anketa-value">${c.relativePhone} / ${c.colleaguePhone}</span></div>
+      <div class="anketa-field"><span class="anketa-label">Цель / сумма / срок:</span><span class="anketa-value">${c.purpose} / ${fmt(c.amount)} ₽ / ${c.term} мес.</span></div>
+      <div class="anketa-field"><span class="anketa-label">История в банке:</span><span class="anketa-value">${rec.taken} брал / ${rec.returned} вернул / ${rec.defaults} дефолт</span></div>
+      <div class="anketa-field"><span class="anketa-label">Балл БКИ:</span>${c.bkiRevealed ? `<span class="anketa-value safe">${c.score}</span>` : '<span class="anketa-value suspicious">скрыт (запрос БКИ)</span>'}</div>
+      <div class="anketa-field"><span class="anketa-label">2-НДФЛ:</span>${docStatus('2ndfl')}</div>
+      <div class="anketa-field"><span class="anketa-label">Выписка:</span>${docStatus('extract')}</div>
+      <div class="anketa-field"><span class="anketa-label">Контакты:</span>${docStatus('contacts')}</div>`;
+  }
+  document.getElementById('anketaContent').innerHTML = html;
+  document.getElementById('anketaModal').classList.add('active');
+  playSound('click');
+}
+
+// === ДОКУМЕНТЫ ===
+function requestDoc(type) {
+  if (!state.current || state.current.isDepositor) return;
+  if (state.energy < 3) { notify('⚠️ Недостаточно энергии!'); return; }
+  const c = state.current;
+  if (c.docRequests[type] === 'verified' || c.docRequests[type] === 'fake') { notify('⚠️ Уже проверено!'); return; }
+  useEnergy(3);
+  c.docRequests[type] = 'requested';
+  const names = { '2ndfl': '2-НДФЛ', 'extract': 'Выписка', 'contacts': 'Контакты', 'balance': 'Бухгалтерия', 'tax': 'Налоги', 'benef': 'Бенефициары' };
+  log(`📄 Запрошено: ${names[type]}`);
+  setTimeout(() => {
+    const isFake = c.suspicious && Math.random() > 0.5;
+    c.docRequests[type] = isFake ? 'fake' : 'verified';
+    if (isFake) {
+      log(`🚨 ${names[type]} — ПОДДЕЛКА!`);
+      notify('🚨 Обнаружена подделка документа!');
+      c.risk += 0.3; c.suspicious = true;
+      playSound('error');
+    } else {
+      log(`✅ ${names[type]} — подтверждено.`);
+      notify('✅ Документ подтверждён');
+    }
+    if (state.current === c) displayClientInfo(); // клиент мог смениться за 500 мс
+  }, 500);
+}
+
+// === СБ ===
+function requestSB() {
+  if (!state.current || state.current.isDepositor) return;
+  const cost = state.current.corporate ? 15000 : 5000;
+  if (state.cash < cost) { notify('⚠️ Недостаточно средств!'); return; }
+  if (state.energy < 5) { notify('⚠️ Недостаточно энергии!'); return; }
+  state.cash -= cost;
+  useEnergy(5);
+  const c = state.current;
+  let verdict, verdictClass, details;
+  if (c.suspicious) {
+    if (Math.random() > 0.5) {
+      verdict = 'В ЧЁРНОМ СПИКЕ'; verdictClass = 'blacklist';
+      details = `${c.name} в базе недобросовестных заёмщиков. Рекомендуется отказ.`;
+    } else {
+      verdict = 'ПОДОЗРИТЕЛЬНЫЙ'; verdictClass = 'suspicious';
+      details = `Связи с лицами из чёрного списка, непрозрачные доходы. Решение на ваше усмотрение.`;
+    }
+  } else {
+    verdict = 'ЧИСТО'; verdictClass = 'clean';
+    details = `Проверка по базам ФССП, ФНС, МВД — нарушений не выявлено.`;
+  }
+  state.sbVerdict = { text: verdict, class: verdictClass, details };
+  document.getElementById('sbContent').innerHTML = `
+    <div class="sb-verdict ${verdictClass}"><h3>${verdict}</h3><p style="margin-top: 10px;">${details}</p></div>
+    <p style="color: #888; margin-top: 15px;">Окончательное решение за вами.</p>`;
+  document.getElementById('sbModal').classList.add('active');
+  log(`🔍 СБ: вердикт "${verdict}" по ${c.name}`);
+  displayClientInfo();
+  updateUI();
+}
+
+// === ДЕТЕКТОР ЛЖИ ===
+let mgActive = false, mgPos = 0, mgDir = 1, mgZoneStart = 0, mgZoneWidth = 0, mgInterval = null;
+function startLieDetector() {
+  if (!state.current || state.current.isDepositor) return;
+  if (state.lieDetectorUsed) { notify('⚠️ Детектор уже использован!'); return; }
+  if (state.energy < 8) { notify('⚠️ Нужно 8 энергии!'); return; }
+  useEnergy(8);
+  state.lieDetectorUsed = true;
+  document.getElementById('miniGameModal').classList.add('active');
+  mgActive = true;
+  mgZoneStart = 30 + Math.random() * 40;
+  mgZoneWidth = 15 + Math.random() * 10;
+  document.getElementById('miniGameZone').style.left = mgZoneStart + '%';
+  document.getElementById('miniGameZone').style.width = mgZoneWidth + '%';
+  mgPos = 0; mgDir = 1;
+  mgInterval = setInterval(() => {
+    mgPos += mgDir * 2;
+    if (mgPos >= 100 || mgPos <= 0) mgDir *= -1;
+    document.getElementById('miniGameIndicator').style.left = mgPos + '%';
+  }, 20);
+}
+function miniGameAction() {
+  if (!mgActive) return;
+  clearInterval(mgInterval);
+  mgActive = false;
+  const hit = mgPos >= mgZoneStart && mgPos <= mgZoneStart + mgZoneWidth;
+  const c = state.current;
+  if (hit) {
+    if (Math.random() < 0.8) {
+      if (c.suspicious) {
+        state.lieDetected = true;
+        log('🎯 Детектор: ПОДТВЕРЖДЕНА ЛОЖЬ!');
+        notify('🚨 Детектор подтвердил ложь!');
+      } else {
+        log('🎯 Детектор: клиент честен.');
+        notify('✅ Детектор: клиент честен');
+      }
+    } else {
+      log('🎯 Детектор: сбой прибора.');
+      notify('⚠️ Детектор дал сбой');
+    }
+    playSound('approve');
+  } else {
+    log('❌ Детектор: промах.');
+    notify('❌ Промах!');
+    playSound('error');
+  }
+  setTimeout(() => document.getElementById('miniGameModal').classList.remove('active'), 800);
+}
+
+// === ДИАЛОГИ ===
+const DIALOGUES = {
+  start: [
+    { text: 'Здравствуйте! Мне нужен кредит на {purpose}.', options: [
+      { text: 'Расскажите подробнее о цели.', next: 'purpose' },
+      { text: 'Какой у вас стабильный доход?', next: 'income' },
+      { text: 'Есть ли другие кредиты?', next: 'other_loans' },
+      { text: 'Семейное положение?', next: 'family' }
+    ]}
+  ],
+  purpose: [
+    { text: 'Ну... мне нужно {real_purpose}.', options: [
+      { text: 'Но в анкете указано "{stated_purpose}"!', next: 'caught_lie' },
+      { text: 'Понятно. А сколько это стоит?', next: 'cost' },
+      { text: 'Насколько срочно?', next: 'urgency' },
+      { text: 'Хорошо, проверим документы.', next: 'end' }
+    ]}
+  ],
+  income: [
+    { text: 'Я получаю {income} в месяц.', options: [
+      { text: 'Подтверждается 2-НДФЛ?', next: 'doc_check' },
+      { text: 'Не маловато ли для такой суммы?', next: 'challenge' },
+      { text: 'Есть другое имущество?', next: 'property' },
+      { text: 'Есть другие кредиты?', next: 'other_loans' }
+    ]}
+  ],
+  other_loans: [
+    { text: 'Есть один маленький кредит в другом банке...', options: [
+      { text: 'Какой банк и сумма?', next: 'details' },
+      { text: 'Почему скрыли в анкете?', next: 'hidden_loan' },
+      { text: 'В каких ещё банках?', next: 'other_banks' },
+      { text: 'Хорошо, к оформлению.', next: 'end' }
+    ]}
+  ],
+  family: [
+    { text: '{family_status}.', options: [
+      { text: 'Есть дети?', next: 'children' },
+      { text: 'Супруг/супруга работает?', next: 'spouse_work' },
+      { text: 'Понятно. О кредите.', next: 'end' }
+    ]}
+  ],
+  urgency: [
+    { text: 'Очень срочно, на этой неделе!', options: [
+      { text: 'Почему спешка?', next: 'urgency_reason' },
+      { text: 'Срочность — риск. Запомню.', next: 'end', risk: true },
+      { text: 'Хорошо, рассмотрим.', next: 'end' }
+    ]}
+  ],
+  property: [
+    { text: 'Есть квартира в ипотеке и машина.', options: [
+      { text: 'Квартира в залоге? Запомню.', next: 'end', risk: true },
+      { text: 'Хорошо, положительный фактор.', next: 'end' },
+      { text: 'Документы на имущество?', next: 'end' }
+    ]}
+  ],
+  other_banks: [
+    { text: 'Ну, ещё в двух-трёх...', options: [
+      { text: 'Высокая нагрузка. Запомню.', next: 'end', risk: true },
+      { text: 'Понятно. Проверим документы.', next: 'end' }
+    ]}
+  ],
+  caught_lie: [
+    { text: 'Ой, ну я передумал... Мне нужно {real_purpose}.', options: [
+      { text: 'Это ложь в анкете. Запомню.', next: 'end', lie: true },
+      { text: 'Ладно, продолжим.', next: 'end' }
+    ]}
+  ],
+  cost: [
+    { text: 'Ну... примерно {cost} рублей.', options: [
+      { text: 'Адекватная цена?', next: 'price_check' },
+      { text: 'Понятно. Другие кредиты?', next: 'other_loans' },
+      { text: 'Хорошо, проверим документы.', next: 'end' }
+    ]}
+  ],
+  doc_check: [
+    { text: 'Да, вот справка.', options: [
+      { text: '(Проверить подлинность)', next: 'end' },
+      { text: 'Выглядит подозрительно...', next: 'end', suspicious: true }
+    ]}
+  ],
+  challenge: [
+    { text: 'Ну у меня подработки... хватит!', options: [
+      { text: 'Нестабильный доход. Запомню.', next: 'end', risk: true },
+      { text: 'Ладно, продолжим.', next: 'end' }
+    ]}
+  ],
+  details: [
+    { text: 'В банке "{bank}", осталось {remaining}.', options: [
+      { text: 'Понятно. Проверим документы.', next: 'end' },
+      { text: 'Почему не в анкете?', next: 'hidden_loan' }
+    ]}
+  ],
+  hidden_loan: [
+    { text: 'Ой, забыл... маленький кредит...', options: [
+      { text: 'Сокрытие — плохо. Запомню.', next: 'end', lie: true },
+      { text: 'Ладно, продолжим.', next: 'end' }
+    ]}
+  ],
+  price_check: [
+    { text: 'Ну да, сейчас всё дорого...', options: [
+      { text: 'Сомнительно. Запомню.', next: 'end', suspicious: true },
+      { text: 'Хорошо, проверим документы.', next: 'end' }
+    ]}
+  ],
+  children: [
+    { text: '{children_count}.', options: [
+      { text: 'Нагрузка растёт. Запомню.', next: 'end', risk: true },
+      { text: 'Есть алименты?', next: 'end' },
+      { text: 'Хорошо, продолжим.', next: 'end' }
+    ]}
+  ],
+  spouse_work: [
+    { text: '{spouse_answer}.', options: [
+      { text: 'Допдоход. Хорошо.', next: 'end' },
+      { text: 'А если развод? Запомню.', next: 'end', risk: true },
+      { text: 'Понятно.', next: 'end' }
+    ]}
+  ],
+  urgency_reason: [
+    { text: 'Ну... просто очень нужно!', options: [
+      { text: 'Неубедительно. Риск повышен.', next: 'end', risk: true },
+      { text: 'Хорошо, рассмотрим.', next: 'end' }
+    ]}
+  ]
+};
+const DIALOGUES_CORP = {
+  start: [
+    { text: 'Добрый день. Я директор {company}. Нужен кредит на {purpose}.', options: [
+      { text: 'О финансовом состоянии.', next: 'finances' },
+      { text: 'Кто бенефициары?', next: 'benef' },
+      { text: 'Долги в других банках?', next: 'debts' },
+      { text: 'Как давно работаете?', next: 'history' }
+    ]}
+  ],
+  finances: [
+    { text: 'Выручка стабильная, рентабельность {profitability}%.', options: [
+      { text: 'Подтвердите отчётностью.', next: 'end' },
+      { text: 'Отрицательная рентабельность? Запомню.', next: 'end', risk: true },
+      { text: 'Хорошо. Бенефициары?', next: 'benef' }
+    ]}
+  ],
+  benef: [
+    { text: 'Структура владения сложная: {beneficiaries}.', options: [
+      { text: 'Офшор? Красный флаг. Запомню.', next: 'end', risk: true },
+      { text: 'Дайте схему владения.', next: 'end' },
+      { text: 'Понятно. Долги?', next: 'debts' }
+    ]}
+  ],
+  debts: [
+    { text: 'Есть кредит в {bank}, остаток {remaining}.', options: [
+      { text: 'Почему не в анкете? Запомню.', next: 'end', lie: true },
+      { text: 'Понятно. Рефинансирование?', next: 'end' },
+      { text: 'Хорошо, проверим документы.', next: 'end' }
+    ]}
+  ],
+  history: [
+    { text: 'На рынке {years} лет.', options: [
+      { text: 'Молодая компания — риск. Запомню.', next: 'end', risk: true },
+      { text: 'Солидный срок. Хорошо.', next: 'end' },
+      { text: 'Понятно. О финансах?', next: 'finances' }
+    ]}
+  ]
+};
+function startDialogue() {
+  if (!state.current || state.current.isDepositor) return;
+  if (state.energy < 5) { notify('⚠️ Недостаточно энергии!'); return; }
+  useEnergy(5);
+  document.getElementById('dialogueBox').style.display = 'block';
+  document.getElementById('actionButtons').style.display = 'none';
+  showDialogueStage('start');
+}
+function showDialogueStage(stage) {
+  const c = state.current;
+  const pool = c.corporate ? DIALOGUES_CORP : DIALOGUES;
+  const dialogues = pool[stage];
+  if (!dialogues) { endDialogue(); return; }
+  const dialogue = rand(dialogues);
+  let text = dialogue.text
+    .replace('{purpose}', c.purpose)
+    .replace('{real_purpose}', rand(['погашение долгов','азартные игры','подарок другу','инвестиции в крипту']))
+    .replace('{stated_purpose}', c.purpose)
+    .replace('{income}', fmt(c.salary) + ' ₽')
+    .replace('{cost}', fmt(c.amount * (0.8 + Math.random() * 0.4)) + ' ₽')
+    .replace('{bank}', rand(['Сбербанк','ВТБ','Альфа-Банк','Тинькофф']))
+    .replace('{remaining}', fmt(randInt(50000, 3000000)) + ' ₽')
+    .replace('{family_status}', rand(['Женат/замужем','Холост/не замужем','В разводе']))
+    .replace('{children_count}', rand(['Нет детей','Один ребёнок','Двое детей','Трое детей']))
+    .replace('{spouse_answer}', rand(['Да, работает','Нет, в декрете','На пенсии']))
+    .replace('{company}', c.name)
+    .replace('{profitability}', c.profitability !== undefined ? c.profitability : 0)
+    .replace('{beneficiaries}', c.beneficiaries || '—')
+    .replace('{years}', c.yearsOnMarket || 0);
+  document.getElementById('dialogueText').textContent = text;
+  const optionsDiv = document.getElementById('dialogueOptions');
+  optionsDiv.innerHTML = '';
+  dialogue.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt.text;
+    btn.onclick = () => selectDialogueOption(opt);
+    optionsDiv.appendChild(btn);
+  });
+}
+function selectDialogueOption(option) {
+  if (option.lie) { state.lieDetected = true; log('🚨 Обнаружена ложь!'); }
+  if (option.suspicious) { state.current.suspicious = true; log('⚠ Подозрительное поведение.'); }
+  if (option.risk) { state.current.risk += 0.1; log('⚠ Риск повышен.'); }
+  if (option.next === 'end') endDialogue();
+  else showDialogueStage(option.next);
+}
+function endDialogue() {
+  document.getElementById('dialogueBox').style.display = 'none';
+  document.getElementById('actionButtons').style.display = 'flex';
+  log('💬 Диалог завершён.');
+}
+
+// === РЕШЕНИЯ ===
+function approveLoan() {
+  if (!state.current || state.current.isDepositor) return;
+  if (state.gameOver) return;
+  if (Date.now() - (state.decidedAt || 0) < 350) return; // защита от двойного тапа
+  state.decidedAt = Date.now();
+  const c = state.current;
+  const limit = getDailyLimit();
+  if (state.dailyIssued + c.amount > limit) {
+    notify('⚠️ Превышен дневной лимит выдачи!');
+    log(`⚠ Отказ из-за лимита: ${c.name}`);
+    playSound('error');
+    return;
+  }
+  if (c.amount > state.capital * 0.3) {
+    notify('⚠️ Слишком крупная выдача относительно резерва!');
+    playSound('error');
+    return;
+  }
+  state.capital -= c.amount; // тело ушло в работу — это НЕ убыток
+  state.dailyIssued += c.amount;
+  state.weekStats.issued += c.amount;
+  state.approvedToday++;
+  const fee = c.amount * (0.01 + Math.random() * 0.02);
+  state.cash += fee;
+  state.dailyProfit += fee;
+  state.feesToday += fee;
+  state.careerPoints += 1;
+  const termDays = Math.max(5, Math.round(c.term / 4));
+  const payEvery = Math.max(2, Math.round(termDays / 3));
+  const margin = 5 + Math.random() * 3;
+  const rate = state.keyRate + margin;
+  state.loans.push({...c, rate, age: 0, termDays, paid: 0, payEvery, nextPay: payEvery, lieDetected: state.lieDetected, sbVerdict: state.sbVerdict});
+  const rec = ensureDB(c.name);
+  rec.taken++;
+  useEnergy(c.energy);
+  log(`✅ Одобрено: ${c.name}, ${fmt(c.amount)}₽ под ${rate.toFixed(1)}% (комиссия ${fmt(fee)}₽, транши каждые ${payEvery} дн.)`);
+  playSound('approve');
+  if (c.special) { state.careerPoints += 10; addRep(5); log('⚠ Протеже одобрен: карьера +10, но риск ваш.'); }
+  if (c.suspicious && Math.random() < 0.3) {
+    const fine = c.amount * 0.2;
+    state.cash -= fine;
+    addRep(-10);
+    log(`⚠ СБ: клиент серый! Штраф ${fmt(fine)}₽`);
+  }
+  if (state.lieDetected) log('⚠ Одобрено с ложью! Риск NPL повышен.');
+  checkPromotion();
+  checkGameOver();
+  updateLimiter();
+  nextClient();
+}
+function denyLoan() {
+  if (!state.current || state.current.isDepositor) return;
+  if (state.gameOver) return;
+  if (Date.now() - (state.decidedAt || 0) < 350) return;
+  state.decidedAt = Date.now();
+  const c = state.current;
+  useEnergy(c.energy * 0.5);
+  state.deniedToday++;
+  if (c.special) {
+    if (c.suspicious || (state.sbVerdict && state.sbVerdict.text !== 'ЧИСТО')) {
+      addRep(3); state.careerPoints += 3;
+      log(`❌ Отказ протеже с чистыми руками (+3 реп)`);
+    } else {
+      addRep(-8);
+      log(`❌ Отказ протеже: вы нарушили слово сверху (-8 реп)`);
+    }
+  } else if (c.suspicious || (state.sbVerdict && state.sbVerdict.text !== 'ЧИСТО')) {
+    state.careerPoints += 3; addRep(2);
+    log(`❌ Отказано: ${c.name} (правильное решение, +3 карьеры)`);
+  } else {
+    state.careerPoints -= 1;
+    log(`❌ Отказано: ${c.name} (чистый клиент, -1 карьеры)`);
+  }
+  playSound('deny');
+  checkPromotion();
+  nextClient();
+}
+function acceptDeposit() {
+  if (!state.current || !state.current.isDepositor) return;
+  if (state.gameOver) return;
+  if (Date.now() - (state.decidedAt || 0) < 350) return;
+  state.decidedAt = Date.now();
+  const c = state.current;
+  if (state.depositRate < c.desiredRate && Math.random() > 0.4) {
+    log(`🏠 ${c.name}: ставка ниже желаемой, вкладчик ушёл.`);
+    notify('⚠️ Вкладчик ушёл: ставка низкая');
+  } else {
+    state.capital += c.amount;
+    state.deposits.push({ name: c.name, amount: c.amount, rate: state.depositRate, age: 0, termDays: Math.max(7, Math.round(c.term / 2)) });
+    state.weekStats.deposited += c.amount;
+    log(`🏠 Принят вклад: ${c.name}, ${fmt(c.amount)}₽ под ${state.depositRate.toFixed(1)}%`);
+    notify('✅ Вклад принят: лимит выдачи вырос');
+    playSound('approve');
+  }
+  useEnergy(c.energy);
+  nextClient();
+}
+function declineDepositor() {
+  if (!state.current || !state.current.isDepositor) return;
+  if (state.gameOver) return;
+  if (Date.now() - (state.decidedAt || 0) < 350) return;
+  state.decidedAt = Date.now();
+  log(`🏠 Отказ вкладчику: ${state.current.name}`);
+  useEnergy(2);
+  playSound('deny');
+  nextClient();
+}
+
+// === КАРЬЕРА ===
+function checkPromotion() {
+  let newRank = 0;
+  for (let i = 0; i < RANKS.length; i++) if (state.careerPoints >= RANKS[i].points) newRank = i;
+  if (newRank > state.rank) {
+    state.rank = newRank;
+    state.plan = Math.round(state.plan * 1.5);
+    document.getElementById('promotionText').textContent =
+      `Вы повышены до: ${RANKS[newRank].name}!${newRank >= 3 ? ' Теперь доступны юрлица.' : ''}`;
+    document.getElementById('promotionModal').classList.add('active');
+    log(`🎉 ПОВЫШЕНИЕ: ${RANKS[newRank].name}`);
+    playSound('promotion');
+  }
+}
+
+// === ДОЛЖНИКИ ===
+function renderDebtors() {
+  const list = document.getElementById('debtorsList');
+  document.getElementById('debtorCount').textContent = state.debtors.length;
+  if (state.debtors.length === 0) {
+    list.innerHTML = '<p style="color: #888;">Должников нет. Отличная работа!</p>';
+    return;
+  }
+  list.innerHTML = state.debtors.map((d, i) => `
+    <div class="debtor-item">
+      <div><b>${esc(d.name)}</b> — ${esc(fmt(d.amount))} ₽ (${d.type})</div>
+      <div style="color: #888; font-size: 0.9em;">Просрочка: ${d.daysOverdue} дн. | Статус: ${esc(d.status)}</div>
+      <div class="debtor-actions">
+        <button class="btn btn-small" onclick="debtorAction(${i}, 'call')">📞 Позвонить</button>
+        <button class="btn btn-small" onclick="debtorAction(${i}, 'warn')">⚠️ Предупреждение</button>
+        <button class="btn btn-small" onclick="debtorAction(${i}, 'sb')">🔍 В СБ</button>
+        <button class="btn btn-small" onclick="debtorAction(${i}, 'writeoff')">💀 Списать</button>
+      </div>
+    </div>`).join('');
+}
+function debtorAction(index, action) {
+  const d = state.debtors[index];
+  if (!d) return;
+  playSound('click');
+  if (action === 'call') {
+    if (Math.random() > 0.5) {
+      state.capital += d.amount * 0.1;
+      log(`📞 ${d.name}: вернул ${fmt(d.amount * 0.1)}₽`);
+      notify('✅ Частичное взыскание');
+    } else {
+      log(`📞 ${d.name}: не берёт трубку.`);
+      notify('❌ Не отвечает');
+      d.daysOverdue += 1;
+    }
+  } else if (action === 'warn') {
+    log(`⚠️ ${d.name}: предупреждение отправлено.`);
+    d.status = 'предупреждение';
+    if (Math.random() > 0.7) {
+      state.capital += d.amount * 0.3;
+      log(`✅ ${d.name}: вернул часть после предупреждения.`);
+      state.debtors.splice(index, 1);
+    }
+  } else if (action === 'sb') {
+    log(`🔍 ${d.name}: СБ взыскала 50%.`);
+    state.capital += d.amount * 0.5;
+    addRep(3);
+    state.debtors.splice(index, 1);
+    notify('✅ СБ взыскал 50% долга');
+  } else if (action === 'writeoff') {
+    log(`💀 ${d.name}: списан.`);
+    addRep(-5);
+    state.debtors.splice(index, 1);
+  }
+  renderDebtors();
+  updateUI();
+}
+
+// === НОЧНЫЕ СОБЫТИЯ ===
+const NIGHT_EVENTS = [
+  {
+    title: '🏛️ Проверка ЦБ',
+    text: 'Центробанк прислал инспекцию для проверки вашей работы.',
+    choices: [
+      { label: 'Предоставить все документы честно', effect: (s) => {
+          if (s.npl > 3) { s.cash -= 100000; return 'Инспекция нашла нарушения. Штраф 100 000 ₽.'; }
+          s.cash += 50000; addRep(5); return 'Проверка пройдена. Премия 50 000 ₽, репутация +5.';
+        } },
+      { label: 'Попытаться договориться (30 000 ₽)', effect: (s) => {
+          s.cash -= 30000;
+          if (Math.random() > 0.5) { addRep(-15); s.cash -= 200000; return 'Скандал! Штраф 200 000 ₽, репутация -15.'; }
+          return 'Инспектор «не заметил» нарушений.';
+        } }
+    ]
+  },
+  {
+    title: '📞 Звонок сверху',
+    text: 'Влиятельный человек просит одобрить завтра кредит его протеже «без лишних вопросов».',
+    choices: [
+      { label: 'Согласиться (протеже придёт завтра)', effect: (s) => {
+          s.specialNext = true; addRep(10); s.careerPoints += 5;
+          return 'Вы согласились. Завтра первым придёт протеже. Карьера +5.';
+        } },
+      { label: 'Отказать по регламенту', effect: (s) => {
+          addRep(-5); s.careerPoints += 2;
+          return 'Отказ по регламенту: -5 реп, +2 карьеры (совесть чиста).';
+        } }
+    ]
+  },
+  {
+    title: '💰 Предложение взятки',
+    text: 'Клиент оставил конверт с 50 000 ₽: «За положительное решение».',
+    choices: [
+      { label: 'Взять конверт', effect: (s) => {
+          s.cash += 50000;
+          if (Math.random() > 0.6) { addRep(-20); s.cash -= 150000; return 'Поймали с поличным! Штраф 150 000 ₽, реп -20.'; }
+          return 'Конверт ваш. Никто не заметил.';
+        } },
+      { label: 'Сдать в СБ', effect: (s) => {
+          addRep(8); s.careerPoints += 4;
+          return 'Конверт сдан. Реп +8, карьера +4.';
+        } }
+    ]
+  },
+  {
+    title: '📰 Экономическая новость',
+    text: 'Колебания на рынке: ставка ЦБ может измениться вне графика.',
+    choices: [
+      { label: 'Изучить прогноз аналитиков', effect: (s) => {
+          const delta = (Math.random() - 0.5) * 3;
+          s.keyRate = Math.max(5, Math.min(25, s.keyRate + delta));
+          return `ЦБ изменил ставку вне графика: ${s.keyRate.toFixed(1)}%`;
+        } },
+      { label: 'Игнорировать', effect: (s) => 'Новость пропущена мимо ушей.' }
+    ]
+  },
+  {
+    title: '🎓 Корпоративное обучение',
+    text: 'Банк предлагает вечерний курс по скорингу заёмщиков.',
+    choices: [
+      { label: 'Пройти курс (+8 карьеры, завтра −10 энергии)', effect: (s) => {
+          s.careerPoints += 8; s.courseFatigue = 10;
+          return 'Курс пройден: карьера +8, завтра устали.';
+        } },
+      { label: 'Отдохнуть дома (+20 энергии)', effect: (s) => {
+          s.energy = Math.min(s.maxEnergy, s.energy + 20);
+          return 'Отдых: +20 энергии.';
+        } }
+    ]
+  }
+];
+function nightEvent() {
+  if (Math.random() > 0.6) { finishDay(); return; }
+  const ev = rand(NIGHT_EVENTS);
+  document.getElementById('eventTitle').textContent = ev.title;
+  document.getElementById('eventText').textContent = ev.text;
+  const choicesDiv = document.getElementById('eventChoices');
+  choicesDiv.innerHTML = '';
+  ev.choices.forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.style.display = 'block';
+    btn.style.width = '100%';
+    btn.textContent = ch.label;
+    btn.onclick = () => nightChoice(i);
+    choicesDiv.appendChild(btn);
+  });
+  window._currentEvent = ev;
+  document.getElementById('eventModal').classList.add('active');
+}
+function nightChoice(i) {
+  const ev = window._currentEvent;
+  const result = ev.choices[i].effect(state);
+  log(`🌙 ${ev.title}: ${result}`);
+  notify(result);
+  closeModal('eventModal');
+  checkPromotion();
+  if (checkGameOver()) return; // после отзыва лицензии день не доделываем
+  finishDay();
+}
+
+// === КОНЕЦ ДНЯ: транши, проценты, дефолты ===
+function endDay() {
+  if (!state.gameOver && !state.dayStarted) { notify('⚠️ День ещё не начат!'); return; }
+  if (state.gameOver) return;
+  state.dayStarted = false; // блок повторного нажатия: транши/возраст уже посчитаны
+  let returnedToday = 0;
+  const defaulted = [], matured = [];
+  state.loans.forEach(l => {
+    l.age++;
+    // плановый транш тела (3 части за срок)
+    if (l.age >= l.nextPay && l.paid < l.amount && l.age < l.termDays) {
+      const tranche = Math.min(Math.round(l.amount / 3), l.amount - l.paid);
+      state.capital += tranche;
+      l.paid += tranche;
+      returnedToday += tranche;
+      state.weekStats.returned += tranche;
+      log(`📥 Плановый транш: ${l.name} вернул ${fmt(tranche)} ₽ тела`);
+      l.nextPay += l.payEvery;
+    }
+    if (l.age >= l.termDays) { matured.push(l); return; }
+    if (Math.random() < l.risk / l.termDays) defaulted.push(l);
+  });
+  matured.forEach(l => {
+    const remaining = l.amount - l.paid;
+    if (remaining > 0) {
+      state.capital += remaining;
+      returnedToday += remaining;
+      state.weekStats.returned += remaining;
+    }
+    const rec = ensureDB(l.name);
+    rec.returned++; rec.score = Math.min(850, rec.score + 20);
+    state.loanHistory.push({ day: state.day, name: l.name, amount: l.amount, result: 'returned' });
+    log(`✅ Кредит закрыт: ${l.name} полностью погашен (БКИ +20)`);
+    playSound('approve');
+  });
+  defaulted.forEach(l => {
+    const remaining = l.amount - l.paid; // дефолт по остатку, а не по всему телу
+    state.npl += 1;
+    state.careerPoints -= 4;
+    const rec = ensureDB(l.name);
+    rec.defaults++; rec.score = Math.max(300, rec.score - 100);
+    state.debtors.push({...l, amount: remaining, daysOverdue: 1, status: 'новый'});
+    state.loanHistory.push({ day: state.day, name: l.name, amount: remaining, result: 'default' });
+    log(`💸 Дефолт: ${l.name}, остаток ${fmt(remaining)} ₽ (-4 карьеры)`);
+  });
+  state.loans = state.loans.filter(l => !matured.includes(l) && !defaulted.includes(l));
+  state.returnedToday = returnedToday;
+  // проценты за день: по остаткам кредитов и по вкладам
+  const interestIncome = state.loans.reduce((s, l) => s + (l.amount - l.paid) * l.rate / 100 / 365, 0);
+  const interestExpense = state.deposits.reduce((s, d) => s + d.amount * d.rate / 100 / 365, 0);
+  state.cash += interestIncome - interestExpense;
+  state.dailyProfit += interestIncome - interestExpense;
+  state.dailyInterestIncome = interestIncome;
+  state.dailyInterestExpense = interestExpense;
+  log(`💹 Проценты за день: +${fmt(interestIncome)} ₽ (кредиты), -${fmt(interestExpense)} ₽ (вклады)`);
+  // вклады: возраст и закрытие
+  const closedDep = [];
+  state.deposits.forEach(d => {
+    d.age++;
+    if (d.age >= d.termDays) closedDep.push(d);
+  });
+  closedDep.forEach(d => {
+    state.capital -= d.amount;
+    log(`🏠 Вклад закрыт: ${d.name}, ${fmt(d.amount)}₽ возвращено вкладчику`);
+  });
+  state.deposits = state.deposits.filter(d => !closedDep.includes(d));
+  // восстановление энергии
+  const energyRecovery = Math.round(state.maxEnergy * (0.7 + (state.reputation / 500)));
+  state.energy = Math.min(state.maxEnergy, energyRecovery);
+  state.coffeeCount = 0; state.lunchCount = 0; state.restCount = 0;
+  showDayReport();
+}
+function showDayReport() {
+  document.getElementById('reportDay').textContent = state.day;
+  const totalLoans = state.loans.length + state.debtors.length;
+  const repaymentRate = totalLoans >= 8 ? ((state.loans.length / totalLoans) * 100).toFixed(1) : 100;
+  document.getElementById('reportContent').innerHTML = `
+    <div class="report-stat"><span class="report-stat-label">Одобрено / отказано:</span><span class="report-stat-value positive">${state.approvedToday} / ${state.deniedToday}</span></div>
+    <div class="report-stat"><span class="report-stat-label">Выдано за день:</span><span class="report-stat-value neutral">${fmt(state.dailyIssued)} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">Возвратов тела сегодня:</span><span class="report-stat-value positive">+${fmt(state.returnedToday)} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">Комиссии за выдачу:</span><span class="report-stat-value positive">+${fmt(state.feesToday)} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">Процентный доход:</span><span class="report-stat-value positive">+${fmt(state.dailyInterestIncome)} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">Процентный расход (вклады):</span><span class="report-stat-value negative">-${fmt(state.dailyInterestExpense)} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">Чистая маржа за день:</span><span class="report-stat-value ${state.dailyProfit >= 0 ? 'positive' : 'negative'}">${fmt(state.dailyProfit)} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">План:</span><span class="report-stat-value ${state.dailyProfit >= state.plan ? 'positive' : 'negative'}">${fmt(state.plan)} ₽ ${state.dailyProfit >= state.plan ? '✓' : '✗'}</span></div>
+    <div class="report-stat"><span class="report-stat-label">Процент возврата:</span><span class="report-stat-value ${repaymentRate > 80 ? 'positive' : 'negative'}">${repaymentRate}%</span></div>
+    <div class="report-stat"><span class="report-stat-label">Собств. капитал:</span><span class="report-stat-value ${getEquity() < EQUITY_WARN ? 'negative' : 'neutral'}">${fmt(getEquity())} ₽</span></div>
+    <div class="report-stat"><span class="report-stat-label">Очки карьеры:</span><span class="report-stat-value neutral">${state.careerPoints}</span></div>`;
+  document.getElementById('reportModal').classList.add('active');
+}
+function closeReport() {
+  closeModal('reportModal');
+  autoSave();
+  if (checkGameOver()) return;
+  nightEvent();
+}
+function finishDay() {
+  state.day++;
+  state.dailyProfit = 0; state.dailyIssued = 0; state.dayStarted = false;
+  state.capitalWarned = false;
+  if ((state.day - 1) % 7 === 0) {
+    log(`📊 Неделя ${state.weekStats.week} закрыта. Выдано: ${fmt(state.weekStats.issued)}₽, вкладов: ${fmt(state.weekStats.deposited)}₽, возвратов: ${fmt(state.weekStats.returned)}₽`);
+    state.weekStats = { week: state.weekStats.week + 1, issued: 0, deposited: 0, returned: 0 };
+  }
+  if (state.day % 7 === 0) {
+    const delta = (Math.random() - 0.5) * 2;
+    state.keyRate = Math.max(5, Math.min(25, state.keyRate + delta));
+    log(`📢 ЦБ изменил ставку: ${state.keyRate.toFixed(1)}%`);
+  }
+  document.getElementById('clientCard').style.display = 'none';
+  document.getElementById('welcomeScreen').style.display = 'block';
+  document.getElementById('welcomeScreen').innerHTML = `
+    <h3>День ${state.day - 1} завершён</h3>
+    <p>Должность: ${RANKS[state.rank].name}</p>
+    <p>Собств. капитал: ${fmt(getEquity())} ₽ | Резерв: ${fmt(state.capital)} ₽</p>
+    <p>NPL: ${state.npl} | Должников: ${state.debtors.length}</p>
+    <p>Энергия: ${state.energy}/${state.maxEnergy}</p>
+    <button class="btn" onclick="startDay()" style="margin-top: 20px;">▶ Начать день ${state.day}</button>`;
+  updateUI();
+}
+
+// === GAME OVER (норматив по СОБСТВЕННОМУ капиталу) ===
+function checkGameOver() {
+  const eq = getEquity();
+  if (eq < EQUITY_DEATH) { gameOver('🏛️ Собственный капитал ниже 70 млн: лицензия отозвана.'); return true; }
+  if (state.reputation <= 0) { gameOver('⭐ Репутация уничтожена. Вас уволили.'); return true; }
+  const nplPercent = getNplRatio() * 100;
+  if (nplPercent > 30) { gameOver(`📉 NPL ${nplPercent.toFixed(1)}% > 30%. Вас уволили.`); return true; }
+  return false;
+}
+function gameOver(reason) {
+  if (state.gameOver) return; // повторные срабатывания не открывают модалку заново
+  state.gameOver = true;
+  state.gameOverReason = reason;
+  document.getElementById('gameOverReason').textContent = reason;
+  document.getElementById('gameOverModal').classList.add('active');
+}
+
+// === UI ===
+function updateUI() {
+  const eq = getEquity();
+  const capEl = document.getElementById('capital');
+  capEl.textContent = fmt(state.capital) + ' ₽';
+  capEl.className = 'stat-value';
+  const eqEl = document.getElementById('equity');
+  eqEl.textContent = fmt(eq) + ' ₽';
+  eqEl.className = 'stat-value' + (eq < EQUITY_DEATH + 5000000 ? ' danger' : eq < EQUITY_WARN ? ' warning' : '');
+  if (eq < EQUITY_WARN && !state.capitalWarned && state.dayStarted) {
+    state.capitalWarned = true;
+    notify('🏛️ ВНИМАНИЕ ЦБ: собственный капитал ниже 80 млн ₽!');
+    log('🏛️ Предупреждение ЦБ: собственный капитал ниже норматива.');
+  }
+  document.getElementById('outstanding').textContent = fmt(getOutstanding()) + ' ₽';
+  document.getElementById('depTotalStat').textContent = fmt(getDepTotal()) + ' ₽';
+  document.getElementById('cash').textContent = fmt(state.cash) + ' ₽';
+  document.getElementById('keyRate').textContent = state.keyRate.toFixed(1) + '%';
+  document.getElementById('depRate').textContent = state.depositRate.toFixed(1) + '%';
+  const net = state.dailyInterestIncome - state.dailyInterestExpense;
+  const netEl = document.getElementById('netInterest');
+  netEl.textContent = (net >= 0 ? '+' : '') + fmt(net) + ' ₽';
+  netEl.className = 'stat-value ' + (net >= 0 ? '' : 'danger');
+  document.getElementById('npl').textContent = Math.round(getNplRatio() * 100) + '% (' + state.debtors.length + ')';
+  document.getElementById('rep').textContent = state.reputation;
+  document.getElementById('plan').textContent = fmt(state.plan) + ' ₽';
+  document.getElementById('rankName').textContent = RANKS[state.rank].name;
+  document.getElementById('careerPoints').textContent = state.careerPoints;
+  updateEnergyUI();
+  updateLimiter();
+  updateCalendar();
+  document.getElementById('boardWeek').textContent = state.weekStats.week;
+  document.getElementById('boardIssued').textContent = fmt(state.weekStats.issued) + ' ₽';
+  document.getElementById('boardDeposits').textContent = fmt(state.weekStats.deposited) + ' ₽';
+  document.getElementById('boardReturned').textContent = fmt(state.weekStats.returned) + ' ₽';
+  document.getElementById('boardToReturn').textContent = fmt(getOutstanding()) + ' ₽';
+  document.getElementById('boardDepTotal').textContent = fmt(getDepTotal()) + ' ₽';
+  document.getElementById('loansCount').textContent = state.loans.length;
+  const queueEl = document.getElementById('queue');
+  queueEl.innerHTML = state.queue.map(c => {
+    const cls = c.isDepositor ? 'dep' : (c.corporate ? 'corp' : '');
+    const icon = c.isDepositor ? '🏠' : (c.corporate ? '🏢' : '👤');
+    return `<div class="queue-item ${cls}">${icon} ${esc(c.type)} — ${esc((c.name || '').split(' ')[0])} (${(c.amount/1000000).toFixed(1)} млн ₽)</div>`;
+  }).join('') || '<em>Пусто</em>';
+  document.getElementById('debtorCount').textContent = state.debtors.length;
+}
+
+// === СОХРАНЕНИЯ ===
+function saveGame(slot) {
+  localStorage.setItem('bank_save_' + slot, JSON.stringify(state));
+  document.getElementById('save' + slot).textContent = `День ${state.day}, ${fmt(state.cash)}₽`;
+  notify(`💾 Сохранено в слот ${slot}`);
+}
+function loadGame(slot) {
+  const data = localStorage.getItem('bank_save_' + slot);
+  if (!data) { notify('⚠️ Слот пуст!'); return; }
+  applySave(data, 'слот ' + slot);
+}
+function loadAuto() {
+  const data = localStorage.getItem('bank_autosave');
+  if (!data) { notify('⚠️ Автосохранения нет!'); return; }
+  applySave(data, 'автосохранение');
+}
+function applySave(data, label) {
+  let s;
+  try {
+    s = JSON.parse(data);
+    if (!s || typeof s.day !== 'number' || typeof s.cash !== 'number') throw new Error('bad save');
+  } catch (e) { notify('⚠️ Файл сохранения повреждён!'); return; }
+  Object.assign(state, s);
+  // санитизация загруженных данных
+  state.gameOver = !!state.gameOver;
+  state.gameOverReason = state.gameOverReason || '';
+  state.courseFatigue = state.courseFatigue || 0;
+  state.decidedAt = 0;
+  state.reputation = Math.max(0, Math.min(100, state.reputation));
+  closeModal('saveModal');
+  restoreUIAfterLoad();
+  updateUI();
+  notify(`📂 Загружено (${label}): День ${state.day}`);
+  if (state.gameOver) {
+    document.getElementById('gameOverReason').textContent = state.gameOverReason || 'Игра окончена';
+    document.getElementById('gameOverModal').classList.add('active');
+  }
+}
+// восстановление экрана: mid-day сейв возвращает к открытому клиенту
+function restoreUIAfterLoad() {
+  const started = state.dayStarted && state.current;
+  document.getElementById('clientCard').style.display = started ? 'block' : 'none';
+  document.getElementById('welcomeScreen').style.display = started ? 'none' : 'block';
+  if (started) {
+    const isDep = state.current.isDepositor;
+    document.getElementById('actionButtons').style.display = isDep ? 'none' : 'flex';
+    document.getElementById('depositorButtons').style.display = isDep ? 'flex' : 'none';
+    document.getElementById('dialogueBox').style.display = 'none';
+    displayClientInfo();
+  } else {
+    document.getElementById('welcomeScreen').innerHTML = `
+      <h3>День ${state.day}</h3>
+      <p>Должность: ${RANKS[state.rank].name}</p>
+      <p>Собств. капитал: ${fmt(getEquity())} ₽ | Резерв: ${fmt(state.capital)} ₽</p>
+      <button class="btn" onclick="startDay()" style="margin-top: 20px;">▶ Начать день</button>`;
+  }
+}
+function refreshSlotLabels() {
+  for (let i = 1; i <= 3; i++) {
+    const data = localStorage.getItem('bank_save_' + i);
+    if (!data) continue;
+    try {
+      const s = JSON.parse(data);
+      document.getElementById('save' + i).textContent = `День ${s.day}, ${fmt(s.cash)}₽`;
+    } catch (e) { /* слот повреждён — оставляем «пусто» */ }
+  }
+}
+function showLoadModal() {
+  for (let i = 1; i <= 3; i++) {
+    const data = localStorage.getItem('bank_save_' + i);
+    if (data) {
+      const s = JSON.parse(data);
+      document.getElementById('load' + i).textContent = `День ${s.day}, ${fmt(s.cash)}₽`;
+    }
+  }
+  document.getElementById('saveModal').classList.add('active');
+}
+function autoSave() { localStorage.setItem('bank_autosave', JSON.stringify(state)); }
+function collectSaves() {
+  const payload = { game: 'bankir', v: 1, slots: {}, autosave: null };
+  for (let i = 1; i <= 3; i++) payload.slots[i] = localStorage.getItem('bank_save_' + i);
+  payload.autosave = localStorage.getItem('bank_autosave');
+  return JSON.stringify(payload);
+}
+function exportSaves() {
+  const json = collectSaves();
+  if (window.NativeSave) { // Android: файл в «Загрузки»
+    const ok = NativeSave.save('bankir-saves.json', json);
+    notify(ok ? '💾 Сейвы экспортированы в «Загрузки»' : '⚠️ Ошибка экспорта');
+    return;
+  }
+  try {
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'bankir-saves.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    notify('💾 Файл bankir-saves.json скачан');
+  } catch (e) { notify('⚠️ Ошибка экспорта: браузер заблокировал скачивание'); }
+}
+function importSaves(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const p = JSON.parse(r.result);
+      if (!p || p.game !== 'bankir' || !p.slots || typeof p.slots !== 'object') throw new Error('not a bankir save');
+      for (let i = 1; i <= 3; i++) if (typeof p.slots[i] === 'string') localStorage.setItem('bank_save_' + i, p.slots[i]);
+      if (typeof p.autosave === 'string') localStorage.setItem('bank_autosave', p.autosave);
+      refreshSlotLabels();
+      notify('📥 Сейвы импортированы');
+    } catch (e) { notify('⚠️ Файл не похож на сохранение «Банкир»'); }
+  };
+  r.readAsText(file);
+}
+
+// === СТАРТ ===
+log('🏦 Добро пожаловать в банк «Надеждный»! Собственный капитал: 101 млн ₽.');
+refreshSlotLabels();
+try {
+  const auto = localStorage.getItem('bank_autosave');
+  if (auto) {
+    const s = JSON.parse(auto);
+    if (s && typeof s.day === 'number') {
+      document.getElementById('welcomeScreen').insertAdjacentHTML('beforeend',
+        `<p style="color:#4aff4a;">Найдено автосохранение: День ${s.day}</p>
+         <button class="btn" onclick="loadAuto()">📂 Продолжить автосохранение</button>`);
+    }
+  }
+} catch (e) { /* повреждённый автосейв игнорируем */ }
+updateUI();
+</script>
+
+</body>
+</html>

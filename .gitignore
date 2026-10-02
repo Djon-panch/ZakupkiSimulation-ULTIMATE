@@ -3,6 +3,10 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+bankir/android/.gradle/
+bankir/android/build/
+bankir/android/app/build/
+bankir/android/local.properties
 
 # IDE
 .idea/
